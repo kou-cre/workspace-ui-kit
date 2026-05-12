@@ -280,7 +280,11 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   const toggleAction = useCallback(
     (noteId: string) => {
       updateProjectNotes((notes) =>
-        notes.map((n) => (n.id === noteId ? { ...n, done: !n.done } : n)),
+        notes.map((n) => {
+          if (n.id !== noteId) return n;
+          const newDone = !n.done;
+          return { ...n, done: newDone, status: newDone ? "解決済み" : "未解決" };
+        }),
       );
     },
     [updateProjectNotes],
@@ -545,9 +549,14 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     (noteId: string) => {
       const cycle = { 未解決: "対応中", 対応中: "解決済み", 解決済み: "未解決" } as const;
       updateProjectNotes((notes) =>
-        notes.map((n) =>
-          n.id === noteId ? { ...n, status: cycle[n.status] } : n,
-        ),
+        notes.map((n) => {
+          if (n.id !== noteId) return n;
+          if (n.isAction) {
+            const newDone = !n.done;
+            return { ...n, done: newDone, status: newDone ? "解決済み" : "未解決" };
+          }
+          return { ...n, status: cycle[n.status] };
+        }),
       );
     },
     [updateProjectNotes],

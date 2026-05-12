@@ -833,6 +833,7 @@ export function ProjectDetailPane({
                         {/* アクション追加 */}
                         <div className="flex gap-2 pt-1">
                           <Input
+                            key={actions.length}
                             value={getNewActionText(milestone.id)}
                             onChange={(e) =>
                               setNewActionTexts((prev) => ({
