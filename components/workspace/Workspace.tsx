@@ -51,6 +51,8 @@ import { NoteDetailPane } from "@/components/workspace/NoteDetailPane";
 
 // ドラッグ中のアイテム種別に応じて衝突対象を絞り込む。
 // closestCenter だけだとマイルストーン sortable が action drag の候補になり誤配置が起きる。
+// またグリップボタン（setNodeRef 要素）とドラッグ元要素中心のズレを補正するため
+// pointerCoordinates を collisionRect 中心として使用する。
 const workspaceCollisionDetection: CollisionDetection = (args) => {
   const activeType = (args.active.data.current as { type?: string } | undefined)?.type;
   const droppableContainers = args.droppableContainers.filter((c) => {
@@ -60,7 +62,20 @@ const workspaceCollisionDetection: CollisionDetection = (args) => {
     if (activeType === "note") return t === "milestone-zone";
     return true;
   });
-  return closestCenter({ ...args, droppableContainers });
+  // ポインター位置を衝突矩形の中心にすることで、グリップ位置と setNodeRef 要素のズレを補正する
+  const { pointerCoordinates } = args;
+  const collisionRect = pointerCoordinates
+    ? {
+        ...args.collisionRect,
+        left: pointerCoordinates.x,
+        right: pointerCoordinates.x,
+        top: pointerCoordinates.y,
+        bottom: pointerCoordinates.y,
+        width: 0,
+        height: 0,
+      }
+    : args.collisionRect;
+  return closestCenter({ ...args, droppableContainers, collisionRect });
 };
 
 type WorkspaceProps = {

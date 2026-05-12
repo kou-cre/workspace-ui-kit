@@ -36,9 +36,11 @@ import { InlineSelectField } from "@/components/primitives/InlineSelectField";
 function MilestoneDropZone({
   milestoneId,
   children,
+  className,
 }: {
   milestoneId: string;
   children: ReactNode;
+  className?: string;
 }) {
   const { active } = useDndContext();
   const { setNodeRef, isOver } = useDroppable({
@@ -59,6 +61,7 @@ function MilestoneDropZone({
           : showHint
           ? "ring-1 ring-inset ring-dashed ring-primary/30"
           : "",
+        className,
       )}
     >
       {children}
@@ -606,7 +609,7 @@ export function ProjectDetailPane({
               {({ attributes: dragAttrs, listeners: dragListeners }) => (
               <div className="flex gap-3">
                 {/* タイムライン列 */}
-                <div className="flex flex-col items-center pt-3">
+                <div className="flex flex-col items-center pt-1">
                   <button
                     type="button"
                     onClick={() => handleMilestoneCircleClick(milestone.id, msIdx, isCurrent)}
@@ -631,7 +634,8 @@ export function ProjectDetailPane({
                   )}
                 </div>
 
-                {/* マイルストーン本体 */}
+                {/* マイルストーン本体 — 折りたたみ時もドロップを受けられるよう Collapsible の外側に置く */}
+                <MilestoneDropZone milestoneId={milestone.id} className="min-w-0 flex-1">
                 <Collapsible
                   open={isOpen}
                   onOpenChange={(open) => toggleMilestone(milestone.id, open)}
@@ -751,7 +755,6 @@ export function ProjectDetailPane({
                   )}
 
                   <CollapsibleContent>
-                    <MilestoneDropZone milestoneId={milestone.id}>
                       <div className="flex flex-col gap-2 pb-2 pt-1">
                         {actions.length === 0 ? (
                           <p className="py-2 text-xs text-muted-foreground">
@@ -834,9 +837,9 @@ export function ProjectDetailPane({
                           </Button>
                         </div>
                       </div>
-                    </MilestoneDropZone>
                   </CollapsibleContent>
                 </Collapsible>
+                </MilestoneDropZone>
               </div>
               )}
               </SortableMilestoneWrapper>
