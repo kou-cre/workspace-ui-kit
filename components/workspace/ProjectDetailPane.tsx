@@ -584,7 +584,8 @@ export function ProjectDetailPane({
                         : "border-muted-foreground bg-background hover:border-primary hover:bg-primary/10",
                     )}
                   >
-                    {(isCompleted || isCurrent) && <Check className="size-3" />}
+                    {isCompleted && <Check className="size-3" />}
+                    {isCurrent && <span className="size-2 animate-pulse rounded-full bg-primary-foreground" />}
                   </button>
                   {idx < milestones.length - 1 && (
                     <div
