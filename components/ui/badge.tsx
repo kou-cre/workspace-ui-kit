@@ -19,6 +19,8 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        delivered:
+          "bg-chart-2/15 text-chart-2 [a]:hover:bg-chart-2/25",
       },
       size: {
         default: "h-5 px-2 text-xs",

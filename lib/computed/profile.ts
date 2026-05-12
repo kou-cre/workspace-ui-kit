@@ -35,6 +35,22 @@ export function formatISODate(d: Date | undefined): string {
 }
 
 /**
+ * ISO 8601 日付文字列から今日との差分を「あと N 日」「今日」「N 日超過」形式で返す。
+ * 日付が空 / 不正な場合は null を返す。
+ */
+export function getDaysLabel(dateStr: string): string | null {
+  if (!dateStr) return null;
+  const target = new Date(dateStr + "T00:00:00");
+  if (Number.isNaN(target.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff === 0) return "今日";
+  if (diff > 0) return `あと ${diff} 日`;
+  return `${Math.abs(diff)} 日超過`;
+}
+
+/**
  * 生年月日から年齢を派生計算し、「N 歳」形式で返す。
  * 空 / 不正な birthday は空文字を返す（UI 側で「未表示」になる）。
  *

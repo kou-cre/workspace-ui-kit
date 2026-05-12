@@ -8,6 +8,23 @@ import path from "node:path";
 const projectRoot = path.resolve(__dirname);
 
 const nextConfig: NextConfig = {
+  webpack: (config) => {
+    // Google Drive パスに "@" が含まれるため enhanced-resolve がモジュール解決に失敗する。
+    // process.cwd() はシンボリックリンクを解決しないので "@" を含まないパスになる。
+    // そのパスを resolve.modules の先頭に置くことで、enhanced-resolve が
+    // "@" 入りの実パスを辿る前にシンボリックリンク側で tailwindcss を発見できる。
+    const cwd = process.cwd();
+    config.resolve.symlinks = false;
+    config.resolve.modules = [
+      path.join(cwd, "node_modules"),
+      "node_modules",
+    ];
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      tailwindcss: path.join(cwd, "node_modules/tailwindcss"),
+    };
+    return config;
+  },
   turbopack: {
     root: projectRoot,
   },

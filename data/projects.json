@@ -1,0 +1,401 @@
+[
+  {
+    "id": "p1",
+    "name": "請求書自動化ツール",
+    "clients": ["株式会社ノフィ"],
+    "status": "development",
+    "milestones": [
+      { "id": "hearing", "label": "ヒアリング" },
+      { "id": "proposal", "label": "提案中" },
+      { "id": "development", "label": "開発中" },
+      { "id": "delivery", "label": "納品済み" },
+      { "id": "maintenance", "label": "保守" }
+    ],
+    "notes": [
+      {
+        "id": "pa1-1",
+        "date": "2026-04-01",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "hearing",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "業務フロー図を共有してもらう",
+        "priority": "normal"
+      },
+      {
+        "id": "pa1-2",
+        "date": "2026-04-01",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "hearing",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "現行システムのAPI仕様確認",
+        "priority": "normal"
+      },
+      {
+        "id": "pa1-3",
+        "date": "2026-04-10",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "proposal",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "提案書作成（3案）",
+        "priority": "normal"
+      },
+      {
+        "id": "pa1-4",
+        "date": "2026-04-10",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "proposal",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "費用見積もり送付",
+        "priority": "normal"
+      },
+      {
+        "id": "pa1-5",
+        "date": "2026-05-01",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "development",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "バックエンドAPI実装",
+        "priority": "normal"
+      },
+      {
+        "id": "pa1-6",
+        "date": "2026-05-01",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "development",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "PDFテンプレート作成",
+        "priority": "normal"
+      },
+      {
+        "id": "n1-1",
+        "date": "2026-05-01",
+        "kind": "アイデア",
+        "status": "未解決",
+        "phase": null,
+        "isAction": false,
+        "done": false,
+        "subtasks": [],
+        "text": "メール送信機能も自動化できると喜ばれそう。Postmark連携を検討する。",
+        "priority": "normal"
+      },
+      {
+        "id": "n1-2",
+        "date": "2026-05-08",
+        "kind": "議論余地",
+        "status": "解決済み",
+        "phase": "development",
+        "isAction": false,
+        "done": false,
+        "subtasks": [],
+        "text": "承認フローは誰が担当するか→CFOが最終承認。担当者への通知はSlack経由で確認。",
+        "priority": "normal"
+      }
+    ]
+  },
+  {
+    "id": "p2",
+    "name": "顧客対応チャットBot",
+    "clients": ["合同会社ミハナ"],
+    "status": "proposal",
+    "milestones": [
+      { "id": "hearing", "label": "ヒアリング" },
+      { "id": "proposal", "label": "提案中" },
+      { "id": "development", "label": "開発中" },
+      { "id": "delivery", "label": "納品済み" },
+      { "id": "maintenance", "label": "保守" }
+    ],
+    "notes": [
+      {
+        "id": "pa2-1",
+        "date": "2026-04-15",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "hearing",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "FAQ一覧の収集",
+        "priority": "normal"
+      },
+      {
+        "id": "pa2-2",
+        "date": "2026-04-15",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "hearing",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "対応チャネル確認（LINE/Web）",
+        "priority": "normal"
+      },
+      {
+        "id": "pa2-3",
+        "date": "2026-05-01",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "proposal",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "RAGアーキテクチャ案の提示",
+        "priority": "normal"
+      },
+      {
+        "id": "pa2-4",
+        "date": "2026-05-01",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "proposal",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "デモ環境構築",
+        "priority": "normal"
+      },
+      {
+        "id": "n2-1",
+        "date": "2026-05-05",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "proposal",
+        "isAction": false,
+        "done": false,
+        "subtasks": [],
+        "text": "LINEのwebhook設定方法を調査して資料にまとめる",
+        "priority": "normal"
+      }
+    ]
+  },
+  {
+    "id": "p3",
+    "name": "在庫管理ダッシュボード",
+    "clients": ["田中商事"],
+    "status": "hearing",
+    "milestones": [
+      { "id": "hearing", "label": "ヒアリング" },
+      { "id": "proposal", "label": "提案中" },
+      { "id": "development", "label": "開発中" },
+      { "id": "delivery", "label": "納品済み" },
+      { "id": "maintenance", "label": "保守" }
+    ],
+    "notes": [
+      {
+        "id": "pa3-1",
+        "date": "2026-05-10",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "hearing",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "現行Excelシートの入手",
+        "priority": "normal"
+      },
+      {
+        "id": "pa3-2",
+        "date": "2026-05-10",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "hearing",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "更新頻度・担当者を確認",
+        "priority": "normal"
+      }
+    ]
+  },
+  {
+    "id": "p4",
+    "name": "月次レポート自動生成",
+    "clients": ["佐藤フリーランス"],
+    "status": "delivery",
+    "milestones": [
+      { "id": "hearing", "label": "ヒアリング" },
+      { "id": "proposal", "label": "提案中" },
+      { "id": "development", "label": "開発中" },
+      { "id": "delivery", "label": "納品済み" },
+      { "id": "maintenance", "label": "保守" }
+    ],
+    "notes": [
+      {
+        "id": "pa4-1",
+        "date": "2026-03-01",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "hearing",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "レポートフォーマット確認",
+        "priority": "normal"
+      },
+      {
+        "id": "pa4-2",
+        "date": "2026-03-10",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "proposal",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "スプレッドシート連携設計",
+        "priority": "normal"
+      },
+      {
+        "id": "pa4-3",
+        "date": "2026-04-01",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "development",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "GAS実装",
+        "priority": "normal"
+      },
+      {
+        "id": "pa4-4",
+        "date": "2026-04-01",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "development",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "テスト実行（3ヶ月分）",
+        "priority": "normal"
+      },
+      {
+        "id": "pa4-5",
+        "date": "2026-04-20",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "delivery",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "操作マニュアル作成",
+        "priority": "normal"
+      },
+      {
+        "id": "pa4-6",
+        "date": "2026-04-20",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "delivery",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "引き渡しミーティング",
+        "priority": "normal"
+      },
+      {
+        "id": "n4-1",
+        "date": "2026-04-20",
+        "kind": "アイデア",
+        "status": "未解決",
+        "phase": "maintenance",
+        "isAction": false,
+        "done": false,
+        "subtasks": [],
+        "text": "次フェーズでSlack通知機能を追加すれば保守契約に繋げられるかも",
+        "priority": "normal"
+      }
+    ]
+  },
+  {
+    "id": "p5",
+    "name": "社内ナレッジ検索AI",
+    "clients": ["株式会社ノフィ", "合同会社ミハナ"],
+    "status": "proposal",
+    "milestones": [
+      { "id": "hearing", "label": "ヒアリング" },
+      { "id": "proposal", "label": "提案中" },
+      { "id": "development", "label": "開発中" },
+      { "id": "delivery", "label": "納品済み" },
+      { "id": "maintenance", "label": "保守" }
+    ],
+    "notes": [
+      {
+        "id": "pa5-1",
+        "date": "2026-04-20",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "hearing",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "社内文書の種類と量を確認",
+        "priority": "normal"
+      },
+      {
+        "id": "pa5-2",
+        "date": "2026-04-20",
+        "kind": "ToDo候補",
+        "status": "解決済み",
+        "phase": "hearing",
+        "isAction": true,
+        "done": true,
+        "subtasks": [],
+        "text": "検索精度の要件ヒアリング",
+        "priority": "normal"
+      },
+      {
+        "id": "pa5-3",
+        "date": "2026-05-01",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "proposal",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "共同利用の費用分担案を作成",
+        "priority": "normal"
+      },
+      {
+        "id": "pa5-4",
+        "date": "2026-05-01",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "proposal",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "プロトタイプデモ実施",
+        "priority": "normal"
+      },
+      {
+        "id": "n5-1",
+        "date": "2026-05-10",
+        "kind": "議論余地",
+        "status": "未解決",
+        "phase": null,
+        "isAction": false,
+        "done": false,
+        "subtasks": [],
+        "text": "2社間でデータを分離するかシェアするか。セキュリティポリシーの確認が必要。",
+        "priority": "normal"
+      }
+    ]
+  }
+]
