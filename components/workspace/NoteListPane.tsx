@@ -193,9 +193,12 @@ function NoteRow({
   onContextMenu,
   onPromoteToAction,
 }: NoteRowProps) {
+  // isAction=true のメモは ProjectDetailPane の useSortable と同じ id で登録されるため
+  // DndContext 内で id 衝突が起き DragOverlay の位置がずれる。action 化済みは disabled にする。
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: note.id,
     data: { type: "note", label: note.text || "メモ" },
+    disabled: note.isAction,
   });
 
   const isEditing = editingNoteId === note.id;
@@ -210,17 +213,19 @@ function NoteRow({
         isSelected && "bg-accent",
       )}
     >
-      {/* ドラッグハンドル — setNodeRef をここに置くことで DragOverlay がカーソル位置に表示される */}
-      <button
-        ref={setNodeRef}
-        type="button"
-        {...attributes}
-        {...listeners}
-        className="mt-1 cursor-grab touch-none text-muted-foreground opacity-0 transition-opacity active:cursor-grabbing focus-visible:opacity-100 group-hover:opacity-100"
-        aria-label="ドラッグしてマイルストーンに移動"
-      >
-        <GripVertical className="size-4" />
-      </button>
+      {/* ドラッグハンドル — action 化済みは ProjectDetailPane で管理するため非表示 */}
+      {!note.isAction && (
+        <button
+          ref={setNodeRef}
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="mt-1 cursor-grab touch-none text-muted-foreground opacity-0 transition-opacity active:cursor-grabbing focus-visible:opacity-100 group-hover:opacity-100"
+          aria-label="ドラッグしてマイルストーンに移動"
+        >
+          <GripVertical className="size-4" />
+        </button>
+      )}
 
       <Checkbox
         id={`note-status-${note.id}`}
