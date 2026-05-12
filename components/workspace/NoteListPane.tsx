@@ -203,7 +203,6 @@ function NoteRow({
 
   return (
     <div
-      ref={setNodeRef}
       onContextMenu={onContextMenu}
       style={{ opacity: isDragging ? 0.4 : 1 }}
       className={cn(
@@ -211,8 +210,9 @@ function NoteRow({
         isSelected && "bg-accent",
       )}
     >
-      {/* ドラッグハンドル */}
+      {/* ドラッグハンドル — setNodeRef をここに置くことで DragOverlay がカーソル位置に表示される */}
       <button
+        ref={setNodeRef}
         type="button"
         {...attributes}
         {...listeners}
