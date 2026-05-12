@@ -483,11 +483,21 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   /** メモをアクションに昇格（isAction: true にするだけ。メモは消えない）。 */
   const promoteNoteToAction = useCallback(
     (noteId: string, phase: StatusKey) => {
-      updateProjectNotes((notes) =>
-        notes.map((n) =>
-          n.id === noteId ? { ...n, isAction: true, phase } : n,
-        ),
-      );
+      updateProjectNotes((notes) => {
+        const noteIdx = notes.findIndex((n) => n.id === noteId);
+        if (noteIdx === -1) return notes;
+        const promoted = { ...notes[noteIdx], isAction: true, phase, done: false };
+        const without = notes.filter((n) => n.id !== noteId);
+        // 対象マイルストーンのアクション末尾に挿入
+        let insertAt = without.length;
+        for (let i = without.length - 1; i >= 0; i--) {
+          if (without[i].isAction && without[i].phase === phase) {
+            insertAt = i + 1;
+            break;
+          }
+        }
+        return [...without.slice(0, insertAt), promoted, ...without.slice(insertAt)];
+      });
     },
     [updateProjectNotes],
   );
@@ -680,11 +690,12 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 ) : null
               )}
 
-              <DragOverlay dropAnimation={null}>
+              {/* style で width/height を auto にして setNodeRef 要素サイズに左右されないようにする */}
+              <DragOverlay dropAnimation={null} style={{ width: "auto", height: "auto" }}>
                 {activeDrag ? (
-                  <div className="flex max-w-56 items-center gap-2 rounded-lg border border-primary/30 bg-card px-3 py-2 text-sm shadow-xl ring-2 ring-primary/20 rotate-1 opacity-95">
+                  <div className="flex w-max max-w-56 items-center gap-2 rounded-lg border border-primary/30 bg-card px-3 py-2 text-sm shadow-xl ring-2 ring-primary/20 rotate-1 opacity-95">
                     <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate">
+                    <span className="max-w-40 truncate">
                       {activeDrag.label || (
                         activeDrag.type === "note" ? "メモ"
                         : activeDrag.type === "action" ? "タスク"

@@ -45,7 +45,9 @@ function MilestoneDropZone({
     id: `drop-${milestoneId}`,
     data: { type: "milestone-zone", milestoneId },
   });
-  const showHint = active !== null && active.data.current?.type !== "milestone";
+  const activeType = active?.data.current?.type as string | undefined;
+  const showHint = active !== null && activeType !== "milestone";
+  const isDraggingNote = activeType === "note";
 
   return (
     <div
@@ -60,6 +62,13 @@ function MilestoneDropZone({
       )}
     >
       {children}
+      {/* ノートドラッグ時：末尾挿入位置を示すライン */}
+      {isOver && isDraggingNote && (
+        <div className="flex items-center gap-0.5 px-2 pb-1 pt-0.5">
+          <div className="size-1.5 shrink-0 rounded-full bg-primary" />
+          <div className="h-0.5 flex-1 rounded-full bg-primary" />
+        </div>
+      )}
     </div>
   );
 }
