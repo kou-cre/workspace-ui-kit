@@ -20,7 +20,7 @@ import { GripVertical } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  closestCenter,
   PointerSensor,
   useSensor,
   useSensors,
@@ -51,19 +51,11 @@ import { NoteDetailPane } from "@/components/workspace/NoteDetailPane";
 
 // ドラッグ中のアイテム種別に応じて衝突対象を絞り込む。
 //
-// action ドラッグ時の課題:
-//   verticalListSortingStrategy は他アイテムを transform で上下にシフトさせる。
-//   その結果 useSortable が報告する rect も transform 反映後となり、
-//   「最後の要素を上にドラッグ」した時に中間 action の中心がポインターから遠ざかる。
-//   一方 milestone-zone (= MilestoneDropZone) はマイルストーン全体を覆う巨大 droppable で、
-//   中心位置が動かないため常に closest になり、挿入ラインが最下部に固定される現象が起きる。
-//
-// 対策:
-//   - actions が「1 つ以上ある」マイルストーンの milestone-zone は action ドラッグ時の候補から外す。
-//     その列内の挿入位置は action droppable で精密に判定する。
-//   - 空のマイルストーンには action droppable が無いので、milestone-zone を候補に残す。
-//   - closestCenter ではなく closestCorners を使う。rect 中心ではなく 4 角からの距離で判定するため、
-//     transform でシフトされた rect でも近い側のコーナーで勝てる。
+// action ドラッグ時に closestCenter だけ使うと milestone-zone（マイルストーン全体を
+// 覆う巨大 droppable）の中心が動かないため常に勝ち続け、挿入ラインが最下部に固定される。
+// 対策: action が 1 つ以上あるマイルストーンの milestone-zone を候補から除外し、
+// 空マイルストーンの zone だけ残す。closestCenter は verticalListSortingStrategy と
+// 相性が良く、transform 後の rect でも中心距離で正しく判定できる。
 const workspaceCollisionDetection: CollisionDetection = (args) => {
   const activeType = (args.active.data.current as { type?: string } | undefined)?.type;
 
@@ -107,7 +99,7 @@ const workspaceCollisionDetection: CollisionDetection = (args) => {
         height: 0,
       }
     : args.collisionRect;
-  return closestCorners({ ...args, droppableContainers, collisionRect });
+  return closestCenter({ ...args, droppableContainers, collisionRect });
 };
 
 type WorkspaceProps = {
