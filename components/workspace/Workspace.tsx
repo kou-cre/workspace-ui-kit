@@ -49,6 +49,11 @@ import { ProjectDetailPane } from "@/components/workspace/ProjectDetailPane";
 import { NoteListPane } from "@/components/workspace/NoteListPane";
 import { NoteDetailPane } from "@/components/workspace/NoteDetailPane";
 
+const todayLocalDate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+
 // ドラッグ中のアイテム種別に応じて衝突対象を絞り込む。
 //
 // action ドラッグ時に closestCenter だけ使うと milestone-zone（マイルストーン全体を
@@ -294,7 +299,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     (phase: StatusKey, text: string) => {
       const newNote: Note = {
         id: `a-${Date.now()}`,
-        date: new Date().toISOString().split("T")[0],
+        date: todayLocalDate(),
         kind: "ToDo候補" as NoteKind,
         status: "未解決" as NoteStatus,
         phase,
@@ -479,7 +484,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     (phase: StatusKey | null = null, defaults?: { kind?: NoteKind; status?: NoteStatus }) => {
       const newNote: Note = {
         id: `n-${Date.now()}`,
-        date: new Date().toISOString().split("T")[0],
+        date: todayLocalDate(),
         kind: defaults?.kind ?? "アイデア",
         status: defaults?.status ?? "未解決",
         phase,
