@@ -276,6 +276,8 @@ function SortableMilestoneWrapper({
 type ProjectDetailPaneProps = {
   project: Project;
   allClientOptions: ComboOption[];
+  selectedMilestoneId: string | null;
+  onSelectMilestone: (id: string) => void;
   onUpdateProjectStatus: (status: StatusKey) => void;
   onUpdateClients: (clients: string[]) => void;
   onAddMilestone: (id: string, label: string) => void;
@@ -295,6 +297,8 @@ type ProjectDetailPaneProps = {
 export function ProjectDetailPane({
   project,
   allClientOptions,
+  selectedMilestoneId,
+  onSelectMilestone,
   onUpdateProjectStatus,
   onUpdateClients,
   onAddMilestone,
@@ -624,7 +628,10 @@ export function ProjectDetailPane({
                   className="mb-3 min-w-0 flex-1"
                 >
                   {/* ヘッダー行: ドラッグハンドル + 開閉エリア */}
-                  <div className="group flex items-center gap-1.5 rounded-md py-1 hover:bg-accent/40">
+                  <div className={cn(
+                    "group flex items-center gap-1.5 rounded-md py-1 hover:bg-accent/40",
+                    selectedMilestoneId === milestone.id && "bg-accent/40",
+                  )}>
                     <button
                       type="button"
                       {...dragAttrs}
@@ -638,13 +645,20 @@ export function ProjectDetailPane({
                     <div
                       role="button"
                       tabIndex={0}
-                      onClick={() => toggleMilestone(milestone.id, !isOpen)}
+                      onClick={() => {
+                        toggleMilestone(milestone.id, !isOpen);
+                        onSelectMilestone(milestone.id);
+                      }}
                       onContextMenu={(e) => {
                         e.preventDefault();
                         setMsCtxMenu({ id: milestone.id, label: milestone.label, x: e.clientX, y: e.clientY });
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleMilestone(milestone.id, !isOpen); }
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleMilestone(milestone.id, !isOpen);
+                          onSelectMilestone(milestone.id);
+                        }
                       }}
                       className="flex flex-1 cursor-pointer select-none items-center gap-1.5"
                     >
@@ -673,6 +687,24 @@ export function ProjectDetailPane({
                           {milestone.label}
                         </span>
                       )}
+
+                      {milestone.dueDate && (() => {
+                        const label = getDaysLabel(milestone.dueDate!);
+                        if (!label) return null;
+                        const overdue = label.includes("超過");
+                        const today = label === "今日";
+                        return (
+                          <span
+                            title={milestone.dueDate!}
+                            className={cn(
+                              "shrink-0 text-[11px] tabular-nums",
+                              overdue ? "text-destructive" : today ? "font-medium text-primary" : "text-muted-foreground",
+                            )}
+                          >
+                            {label}
+                          </span>
+                        );
+                      })()}
 
                       <Badge
                         variant={getMilestoneBadgeVariant(milestone.id)}

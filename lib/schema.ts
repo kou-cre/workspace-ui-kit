@@ -18,16 +18,17 @@ export type NoteFolder = z.infer<typeof noteFolderSchema>;
 export const milestoneSchema = z.object({
   id: z.string(),
   label: z.string(),
+  dueDate: z.string().nullable().default(null),
 });
 export type Milestone = z.infer<typeof milestoneSchema>;
 
 /** デフォルトマイルストーン（AIコンサルドメイン用）。新規案件・未移行データに使用。 */
 export const DEFAULT_MILESTONES: Milestone[] = [
-  { id: "hearing", label: "ヒアリング" },
-  { id: "proposal", label: "提案中" },
-  { id: "development", label: "開発中" },
-  { id: "delivery", label: "納品済み" },
-  { id: "maintenance", label: "保守" },
+  { id: "hearing", label: "ヒアリング", dueDate: null },
+  { id: "proposal", label: "提案中", dueDate: null },
+  { id: "development", label: "開発中", dueDate: null },
+  { id: "delivery", label: "納品済み", dueDate: null },
+  { id: "maintenance", label: "保守", dueDate: null },
 ];
 
 /** 後方互換: フェーズキーは文字列。 */

@@ -28,6 +28,7 @@ import {
 import { type ComboOption } from "@/components/primitives/InlineComboboxField";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { GlobalHeader } from "@/components/workspace/GlobalHeader";
+import { MilestoneDetailPane } from "@/components/workspace/MilestoneDetailPane";
 import { ProjectListPane } from "@/components/workspace/ProjectListPane";
 import { ProjectDetailPane } from "@/components/workspace/ProjectDetailPane";
 import { NoteListPane } from "@/components/workspace/NoteListPane";
@@ -44,6 +45,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     initialProjects[0]?.id ?? "",
   );
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [pane4ManuallyClosed, setPane4ManuallyClosed] = useState(false);
 
   const activeProject =
@@ -59,8 +61,12 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     return Array.from(names).map((name) => ({ value: name, description: "" }));
   }, [projects]);
 
-  const pane4Open = selectedNoteId !== null && !pane4ManuallyClosed;
+  const pane4Open = (selectedNoteId !== null || selectedMilestoneId !== null) && !pane4ManuallyClosed;
   const activeNote = activeProject?.notes.find((n) => n.id === selectedNoteId) ?? null;
+  const activeMilestone = activeProject?.milestones.find((m) => m.id === selectedMilestoneId) ?? null;
+  const activeMilestoneActions = activeMilestone
+    ? (activeProject?.notes.filter((n) => n.isAction && n.phase === activeMilestone.id) ?? [])
+    : [];
 
   // ===== ユーティリティ =====
 
@@ -80,6 +86,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   const selectProject = useCallback((id: string) => {
     setSelectedProjectId(id);
     setSelectedNoteId(null);
+    setSelectedMilestoneId(null);
     setPane4ManuallyClosed(false);
   }, []);
 
@@ -96,6 +103,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     setProjects((prev) => [...prev, newProject]);
     setSelectedProjectId(newProject.id);
     setSelectedNoteId(null);
+    setSelectedMilestoneId(null);
     setPane4ManuallyClosed(false);
   }, []);
 
@@ -124,7 +132,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
       setProjects((prev) =>
         prev.map((p) =>
           p.id === selectedProjectId
-            ? { ...p, milestones: [...p.milestones, { id, label }] }
+            ? { ...p, milestones: [...p.milestones, { id, label, dueDate: null }] }
             : p,
         ),
       );
@@ -141,6 +149,24 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 ...p,
                 milestones: p.milestones.map((m) =>
                   m.id === milestoneId ? { ...m, label } : m,
+                ),
+              }
+            : p,
+        ),
+      );
+    },
+    [selectedProjectId],
+  );
+
+  const updateMilestoneDate = useCallback(
+    (milestoneId: string, date: string | null) => {
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === selectedProjectId
+            ? {
+                ...p,
+                milestones: p.milestones.map((m) =>
+                  m.id === milestoneId ? { ...m, dueDate: date } : m,
                 ),
               }
             : p,
@@ -314,6 +340,13 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
 
   const selectNote = useCallback((id: string) => {
     setSelectedNoteId(id);
+    setSelectedMilestoneId(null);
+    setPane4ManuallyClosed(false);
+  }, []);
+
+  const selectMilestone = useCallback((id: string) => {
+    setSelectedMilestoneId(id);
+    setSelectedNoteId(null);
     setPane4ManuallyClosed(false);
   }, []);
 
@@ -418,6 +451,8 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 key={selectedProjectId}
                 project={activeProject}
                 allClientOptions={allClientOptions}
+                selectedMilestoneId={selectedMilestoneId}
+                onSelectMilestone={selectMilestone}
                 onUpdateProjectStatus={updateProjectStatus}
                 onUpdateClients={updateClients}
                 onAddMilestone={addMilestone}
@@ -450,21 +485,33 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 onAddNoteFolder={addNoteFolder}
               />
 
-              {/* Pane 4: メモ詳細（メモ選択時のみ表示） */}
-              {pane4Open && activeNote && (
-                <NoteDetailPane
-                  key={activeNote.id}
-                  note={activeNote}
-                  milestones={activeProject.milestones}
-                  pane4Open={pane4Open}
-                  onTogglePane4={togglePane4}
-                  onUpdateNote={(field, value) =>
-                    updateNote(activeNote.id, field, value)
-                  }
-                  onSetNotePhase={(phase) => setNotePhase(activeNote.id, phase)}
-                  onDeleteNote={() => deleteNote(activeNote.id)}
-                  onMoveToPhase={(phase) => promoteNoteToAction(activeNote.id, phase)}
-                />
+              {/* Pane 4: マイルストーン詳細またはメモ詳細 */}
+              {pane4Open && (
+                activeMilestone ? (
+                  <MilestoneDetailPane
+                    key={activeMilestone.id}
+                    milestone={activeMilestone}
+                    actions={activeMilestoneActions}
+                    pane4Open={pane4Open}
+                    onTogglePane4={togglePane4}
+                    onUpdateLabel={(label) => updateMilestone(activeMilestone.id, label)}
+                    onUpdateDueDate={(date) => updateMilestoneDate(activeMilestone.id, date)}
+                  />
+                ) : activeNote ? (
+                  <NoteDetailPane
+                    key={activeNote.id}
+                    note={activeNote}
+                    milestones={activeProject.milestones}
+                    pane4Open={pane4Open}
+                    onTogglePane4={togglePane4}
+                    onUpdateNote={(field, value) =>
+                      updateNote(activeNote.id, field, value)
+                    }
+                    onSetNotePhase={(phase) => setNotePhase(activeNote.id, phase)}
+                    onDeleteNote={() => deleteNote(activeNote.id)}
+                    onMoveToPhase={(phase) => promoteNoteToAction(activeNote.id, phase)}
+                  />
+                ) : null
               )}
             </>
           ) : (
