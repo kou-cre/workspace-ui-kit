@@ -174,10 +174,8 @@ export function NoteListPane({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [ctxMenu, setCtxMenu] = useState<CtxState>(null);
-  const [milestoneMenuOpen, setMilestoneMenuOpen] = useState(false);
   const [addingFolder, setAddingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const milestoneMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isMilestoneFilter = milestones.some((m) => m.id === phaseFilter);
@@ -246,47 +244,40 @@ export function NoteListPane({
           全体
         </button>
 
-        {/* マイルストーン（ホバードロップダウン） */}
-        <div
-          ref={milestoneMenuRef}
-          className="relative shrink-0"
-          onMouseEnter={() => setMilestoneMenuOpen(true)}
-          onMouseLeave={() => setMilestoneMenuOpen(false)}
-        >
-          <button
-            type="button"
+        {/* マイルストーン（DropdownMenu） */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
             className={cn(
-              "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
+              "flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors outline-none",
               isMilestoneFilter
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
             {activeMilestoneLabel ?? "マイルストーン"}
-            <ChevronDown className={cn("size-3 transition-transform", milestoneMenuOpen && "rotate-180")} />
-          </button>
-          {milestoneMenuOpen && (
-            <div className="absolute left-0 top-full z-20 mt-1 flex min-w-28 flex-col rounded-md border border-border bg-popover p-1 shadow-md">
-              {milestones.map((m) => {
-                const count = notes.filter((n) => n.phase === m.id).length;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => { setPhaseFilter(m.id); setMilestoneMenuOpen(false); }}
-                    className={cn(
-                      "flex items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent",
-                      phaseFilter === m.id && "bg-accent font-medium",
-                    )}
-                  >
-                    <span>{m.label}</span>
-                    {count > 0 && <span className="tabular-nums text-muted-foreground">{count}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+            <ChevronDown className="size-3 transition-transform data-popup-open:rotate-180" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-32">
+            {milestones.map((m) => {
+              const count = notes.filter((n) => n.phase === m.id).length;
+              return (
+                <DropdownMenuItem
+                  key={m.id}
+                  onClick={() => setPhaseFilter(m.id)}
+                  className={cn(
+                    "flex items-center justify-between gap-4 text-xs",
+                    phaseFilter === m.id && "font-medium",
+                  )}
+                >
+                  <span>{m.label}</span>
+                  {count > 0 && (
+                    <span className="tabular-nums text-muted-foreground">{count}</span>
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* カスタムフォルダ */}
         {noteFolders.map((folder) => {
