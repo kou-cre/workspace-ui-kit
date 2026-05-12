@@ -196,7 +196,7 @@ function NoteRow({
   // isAction=true のメモは ProjectDetailPane の useSortable と同じ id で登録されるため
   // DndContext 内で id 衝突が起き DragOverlay の位置がずれる。action 化済みは disabled にする。
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: note.id,
+    id: note.isAction ? `__noop-${note.id}` : note.id,
     data: { type: "note", label: note.text || "メモ" },
     disabled: note.isAction,
   });
