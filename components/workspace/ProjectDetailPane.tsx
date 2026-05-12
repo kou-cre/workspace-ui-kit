@@ -128,9 +128,13 @@ function SortableActionRow({
 
   const isEditing = editingActionId === action.id;
 
+  // transform.y < 0 はアイテムが上にシフト＝下向きドラッグ → 挿入位置はこのアイテムの下
+  const insertBelow = isOver && !isDragging && (transform?.y ?? 0) < 0;
+  const insertAbove = isOver && !isDragging && (transform?.y ?? 0) >= 0;
+
   return (
     <div ref={setNodeRef} style={style} className={cn("flex flex-col gap-1", isDragging && "pointer-events-none")}>
-      {isOver && !isDragging && (
+      {insertAbove && (
         <div className="flex items-center gap-0.5 py-0.5">
           <div className="size-1.5 shrink-0 rounded-full bg-primary" />
           <div className="h-0.5 flex-1 rounded-full bg-primary" />
@@ -283,6 +287,12 @@ function SortableActionRow({
           </Button>
         </div>
       )}
+      {insertBelow && (
+        <div className="flex items-center gap-0.5 py-0.5">
+          <div className="size-1.5 shrink-0 rounded-full bg-primary" />
+          <div className="h-0.5 flex-1 rounded-full bg-primary" />
+        </div>
+      )}
     </div>
   );
 }
@@ -301,6 +311,8 @@ function SortableMilestoneWrapper({
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
     useSortable({ id, data: { type: "milestone" } });
+  const msInsertBelow = isOver && !isDragging && (transform?.y ?? 0) < 0;
+  const msInsertAbove = isOver && !isDragging && (transform?.y ?? 0) >= 0;
   return (
     <div
       ref={setNodeRef}
@@ -312,13 +324,19 @@ function SortableMilestoneWrapper({
         opacity: isDragging ? 0.3 : 1,
       }}
     >
-      {isOver && !isDragging && (
+      {msInsertAbove && (
         <div className="mb-1 flex items-center gap-0.5">
           <div className="size-1.5 shrink-0 rounded-full bg-primary" />
           <div className="h-0.5 flex-1 rounded-full bg-primary" />
         </div>
       )}
       {children({ attributes, listeners })}
+      {msInsertBelow && (
+        <div className="mt-1 flex items-center gap-0.5">
+          <div className="size-1.5 shrink-0 rounded-full bg-primary" />
+          <div className="h-0.5 flex-1 rounded-full bg-primary" />
+        </div>
+      )}
     </div>
   );
 }
