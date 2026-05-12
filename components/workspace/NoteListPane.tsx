@@ -224,8 +224,8 @@ function NoteRow({
 
       <Checkbox
         id={`note-status-${note.id}`}
-        checked={note.status === "解決済み"}
-        indeterminate={note.status === "対応中"}
+        checked={isDone(note)}
+        indeterminate={!note.isAction && note.status === "対応中"}
         onCheckedChange={onToggleStatus}
         aria-label="ステータスを切り替え"
         className="mt-1 shrink-0"
