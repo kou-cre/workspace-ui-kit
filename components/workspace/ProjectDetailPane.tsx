@@ -115,10 +115,11 @@ function SortableActionRow({
   onToggleSubtask,
   onDeleteSubtask,
 }: SortableActionRowProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver, rect } = useSortable({
     id: action.id,
     data: { type: "action", milestoneId, label: action.text || "タスク" },
   });
+  const { active } = useDndContext();
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -128,9 +129,19 @@ function SortableActionRow({
 
   const isEditing = editingActionId === action.id;
 
-  // transform.y < 0 はアイテムが上にシフト＝下向きドラッグ → 挿入位置はこのアイテムの下
-  const insertBelow = isOver && !isDragging && (transform?.y ?? 0) < 0;
-  const insertAbove = isOver && !isDragging && (transform?.y ?? 0) >= 0;
+  // 挿入位置 (above/below) は「ドラッグ中アイテムの translated rect 中心」と
+  // 「自分の rect 中心」の Y を比較して決める。transform.y は他アイテムの押し出し方向に
+  // 依存して符号が逆転するケースがあるため、active 自身の現在位置で判定するのが堅牢。
+  const activeRect = active?.rect.current.translated;
+  const ownRect = rect.current;
+  const insertAbove =
+    isOver && !isDragging && activeRect && ownRect
+      ? activeRect.top + activeRect.height / 2 < ownRect.top + ownRect.height / 2
+      : false;
+  const insertBelow =
+    isOver && !isDragging && activeRect && ownRect
+      ? activeRect.top + activeRect.height / 2 >= ownRect.top + ownRect.height / 2
+      : false;
 
   return (
     <div ref={setNodeRef} style={style} className={cn("flex flex-col gap-1", isDragging && "pointer-events-none")}>
@@ -309,10 +320,20 @@ function SortableMilestoneWrapper({
     listeners: ReturnType<typeof useSortable>["listeners"];
   }) => ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver, rect } =
     useSortable({ id, data: { type: "milestone" } });
-  const msInsertBelow = isOver && !isDragging && (transform?.y ?? 0) < 0;
-  const msInsertAbove = isOver && !isDragging && (transform?.y ?? 0) >= 0;
+  const { active } = useDndContext();
+  // 挿入位置はドラッグ中要素の translated rect 中心と自分の rect 中心の Y を比較して決定する
+  const activeRect = active?.rect.current.translated;
+  const ownRect = rect.current;
+  const msInsertAbove =
+    isOver && !isDragging && activeRect && ownRect
+      ? activeRect.top + activeRect.height / 2 < ownRect.top + ownRect.height / 2
+      : false;
+  const msInsertBelow =
+    isOver && !isDragging && activeRect && ownRect
+      ? activeRect.top + activeRect.height / 2 >= ownRect.top + ownRect.height / 2
+      : false;
   return (
     <div
       ref={setNodeRef}
