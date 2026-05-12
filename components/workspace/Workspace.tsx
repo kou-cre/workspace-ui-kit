@@ -502,6 +502,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                     key={activeNote.id}
                     note={activeNote}
                     milestones={activeProject.milestones}
+                    noteFolders={activeProject.noteFolders ?? []}
                     pane4Open={pane4Open}
                     onTogglePane4={togglePane4}
                     onUpdateNote={(field, value) =>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowRight, Trash2 } from "lucide-react";
 
-import { type Note, type StatusKey, type Milestone, noteKindSchema, noteStatusSchema, PRIORITY_ORDER } from "@/lib/schema";
+import { type Note, type StatusKey, type Milestone, type NoteFolder, noteKindSchema, noteStatusSchema, PRIORITY_ORDER } from "@/lib/schema";
 import { PRIORITY_LABELS } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,7 @@ const PRIORITY_OPTIONS = PRIORITY_ORDER.map((p) => PRIORITY_LABELS[p]);
 type NoteDetailPaneProps = {
   note: Note;
   milestones: Milestone[];
+  noteFolders: NoteFolder[];
   pane4Open: boolean;
   onTogglePane4: () => void;
   onUpdateNote: (field: keyof Note, value: string) => void;
@@ -42,6 +43,7 @@ type NoteDetailPaneProps = {
 export function NoteDetailPane({
   note,
   milestones,
+  noteFolders,
   pane4Open,
   onTogglePane4,
   onUpdateNote,
@@ -51,19 +53,27 @@ export function NoteDetailPane({
 }: NoteDetailPaneProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const phaseOptions = ["なし", ...milestones.map((m) => m.label)];
+  const phaseOptions = [
+    "なし",
+    ...milestones.map((m) => m.label),
+    ...noteFolders.map((f) => f.label),
+  ];
 
   const handlePhaseSave = (label: string) => {
     if (label === "なし") {
       onSetNotePhase(null);
-    } else {
-      const m = milestones.find((ms) => ms.label === label);
-      if (m) onSetNotePhase(m.id);
+      return;
     }
+    const m = milestones.find((ms) => ms.label === label);
+    if (m) { onSetNotePhase(m.id); return; }
+    const f = noteFolders.find((nf) => nf.label === label);
+    if (f) onSetNotePhase(f.id);
   };
 
   const currentPhaseLabel = note.phase
-    ? (milestones.find((m) => m.id === note.phase)?.label ?? note.phase)
+    ? (milestones.find((m) => m.id === note.phase)?.label
+        ?? noteFolders.find((f) => f.id === note.phase)?.label
+        ?? "なし")
     : "なし";
 
   return (

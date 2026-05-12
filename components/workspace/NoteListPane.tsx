@@ -209,8 +209,14 @@ export function NoteListPane({
     setCtxMenu({ note, x: e.clientX, y: e.clientY });
   };
 
-  const getMilestoneLabel = (phase: string | null) =>
-    phase ? (milestones.find((m) => m.id === phase)?.label ?? phase) : null;
+  const getMilestoneLabel = (phase: string | null) => {
+    if (!phase) return null;
+    return (
+      milestones.find((m) => m.id === phase)?.label ??
+      noteFolders.find((f) => f.id === phase)?.label ??
+      null
+    );
+  };
 
   return (
     <div className="flex min-w-0 flex-1 flex-col border-r border-border bg-canvas">
