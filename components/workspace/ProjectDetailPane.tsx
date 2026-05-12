@@ -259,7 +259,9 @@ function SortableMilestoneWrapper({
     <div
       ref={setNodeRef}
       style={{
-        transform: CSS.Transform.toString(transform),
+        transform: CSS.Transform.toString(
+          transform ? { ...transform, scaleX: 1, scaleY: 1 } : null,
+        ),
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
