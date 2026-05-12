@@ -90,6 +90,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
       clients: [],
       status: "",
       milestones: [],
+      noteFolders: [],
       notes: [],
     };
     setProjects((prev) => [...prev, newProject]);
