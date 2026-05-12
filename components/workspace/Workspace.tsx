@@ -527,7 +527,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 onSelectFolder={selectFolder}
               />
 
-              {/* Pane 4: メモホルダー詳細・マイルストーン詳細・メモ詳細 */}
+              {/* Pane 4: メモフォルダ詳細・マイルストーン詳細・メモ詳細 */}
               {pane4Open && (
                 activeFolder ? (
                   <NoteFolderDetailPane

@@ -45,7 +45,7 @@ export function NoteFolderDetailPane({
     <div className="flex w-72 shrink-0 flex-col border-l border-border bg-card">
       {/* ヘッダー */}
       <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
-        <p className="text-sm font-medium text-muted-foreground">メモホルダー詳細</p>
+        <p className="text-sm font-medium text-muted-foreground">メモフォルダ詳細</p>
         <Pane4Toggle open={pane4Open} onToggle={onTogglePane4} />
       </div>
 
