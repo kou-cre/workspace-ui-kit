@@ -21,6 +21,7 @@ import {
   type Project,
   type StatusKey,
   type Note,
+  type NoteFolder,
   type NoteKind,
   type NoteStatus,
   type Milestone,
@@ -29,6 +30,7 @@ import { type ComboOption } from "@/components/primitives/InlineComboboxField";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { GlobalHeader } from "@/components/workspace/GlobalHeader";
 import { MilestoneDetailPane } from "@/components/workspace/MilestoneDetailPane";
+import { NoteFolderDetailPane } from "@/components/workspace/NoteFolderDetailPane";
 import { ProjectListPane } from "@/components/workspace/ProjectListPane";
 import { ProjectDetailPane } from "@/components/workspace/ProjectDetailPane";
 import { NoteListPane } from "@/components/workspace/NoteListPane";
@@ -46,6 +48,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   );
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [pane4ManuallyClosed, setPane4ManuallyClosed] = useState(false);
 
   const activeProject =
@@ -61,12 +64,13 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     return Array.from(names).map((name) => ({ value: name, description: "" }));
   }, [projects]);
 
-  const pane4Open = (selectedNoteId !== null || selectedMilestoneId !== null) && !pane4ManuallyClosed;
   const activeNote = activeProject?.notes.find((n) => n.id === selectedNoteId) ?? null;
   const activeMilestone = activeProject?.milestones.find((m) => m.id === selectedMilestoneId) ?? null;
+  const activeFolder = activeProject?.noteFolders?.find((f) => f.id === selectedFolderId) ?? null;
   const activeMilestoneActions = activeMilestone
     ? (activeProject?.notes.filter((n) => n.isAction && n.phase === activeMilestone.id) ?? [])
     : [];
+  const pane4Open = (activeNote !== null || activeMilestone !== null || activeFolder !== null) && !pane4ManuallyClosed;
 
   // ===== ユーティリティ =====
 
@@ -87,6 +91,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     setSelectedProjectId(id);
     setSelectedNoteId(null);
     setSelectedMilestoneId(null);
+    setSelectedFolderId(null);
     setPane4ManuallyClosed(false);
   }, []);
 
@@ -104,6 +109,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     setSelectedProjectId(newProject.id);
     setSelectedNoteId(null);
     setSelectedMilestoneId(null);
+    setSelectedFolderId(null);
     setPane4ManuallyClosed(false);
   }, []);
 
@@ -296,8 +302,32 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
         prev.map((p) => {
           if (p.id !== selectedProjectId) return p;
           const id = `folder-${Date.now()}`;
-          return { ...p, noteFolders: [...(p.noteFolders ?? []), { id, label }] };
+          return {
+            ...p,
+            noteFolders: [
+              ...(p.noteFolders ?? []),
+              { id, label, sort: "date-desc" as const, filterKind: null, filterStatus: null },
+            ],
+          };
         }),
+      );
+    },
+    [selectedProjectId],
+  );
+
+  const updateNoteFolder = useCallback(
+    (folderId: string, updates: Partial<NoteFolder>) => {
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === selectedProjectId
+            ? {
+                ...p,
+                noteFolders: (p.noteFolders ?? []).map((f) =>
+                  f.id === folderId ? { ...f, ...updates } : f,
+                ),
+              }
+            : p,
+        ),
       );
     },
     [selectedProjectId],
@@ -341,13 +371,24 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   const selectNote = useCallback((id: string) => {
     setSelectedNoteId(id);
     setSelectedMilestoneId(null);
+    setSelectedFolderId(null);
     setPane4ManuallyClosed(false);
   }, []);
 
   const selectMilestone = useCallback((id: string) => {
     setSelectedMilestoneId(id);
     setSelectedNoteId(null);
+    setSelectedFolderId(null);
     setPane4ManuallyClosed(false);
+  }, []);
+
+  const selectFolder = useCallback((id: string | null) => {
+    setSelectedFolderId(id);
+    if (id !== null) {
+      setSelectedNoteId(null);
+      setSelectedMilestoneId(null);
+      setPane4ManuallyClosed(false);
+    }
   }, []);
 
   const addNote = useCallback(
@@ -483,11 +524,21 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 onPromoteToAction={promoteNoteToAction}
                 onDeleteNote={deleteNote}
                 onAddNoteFolder={addNoteFolder}
+                onSelectFolder={selectFolder}
               />
 
-              {/* Pane 4: マイルストーン詳細またはメモ詳細 */}
+              {/* Pane 4: メモホルダー詳細・マイルストーン詳細・メモ詳細 */}
               {pane4Open && (
-                activeMilestone ? (
+                activeFolder ? (
+                  <NoteFolderDetailPane
+                    key={activeFolder.id}
+                    folder={activeFolder}
+                    noteCount={activeProject.notes.filter((n) => n.phase === activeFolder.id).length}
+                    pane4Open={pane4Open}
+                    onTogglePane4={togglePane4}
+                    onUpdateFolder={(updates) => updateNoteFolder(activeFolder.id, updates)}
+                  />
+                ) : activeMilestone ? (
                   <MilestoneDetailPane
                     key={activeMilestone.id}
                     milestone={activeMilestone}

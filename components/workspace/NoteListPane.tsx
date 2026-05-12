@@ -43,6 +43,24 @@ function sortNotes(notes: Note[], milestones: Milestone[]): Note[] {
   });
 }
 
+function sortNotesForFolder(notes: Note[], sort: string): Note[] {
+  return [...notes].sort((a, b) => {
+    const aDone = isDone(a);
+    const bDone = isDone(b);
+    if (aDone !== bDone) return aDone ? 1 : -1;
+    if (aDone) return 0;
+    switch (sort) {
+      case "date-asc": return a.date.localeCompare(b.date);
+      case "priority-desc":
+        return PRIORITY_ORDER.indexOf(a.priority ?? "normal") - PRIORITY_ORDER.indexOf(b.priority ?? "normal");
+      case "priority-asc":
+        return PRIORITY_ORDER.indexOf(b.priority ?? "normal") - PRIORITY_ORDER.indexOf(a.priority ?? "normal");
+      default:
+        return b.date.localeCompare(a.date);
+    }
+  });
+}
+
 const KIND_VARIANT: Record<Note["kind"], "default" | "secondary" | "outline"> = {
   アイデア: "secondary",
   議論余地: "outline",
@@ -154,6 +172,7 @@ type NoteListPaneProps = {
   onPromoteToAction: (id: string, phase: StatusKey) => void;
   onDeleteNote: (id: string) => void;
   onAddNoteFolder: (label: string) => void;
+  onSelectFolder: (id: string | null) => void;
 };
 
 export function NoteListPane({
@@ -169,6 +188,7 @@ export function NoteListPane({
   onPromoteToAction,
   onDeleteNote,
   onAddNoteFolder,
+  onSelectFolder,
 }: NoteListPaneProps) {
   const [phaseFilter, setPhaseFilter] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -182,11 +202,17 @@ export function NoteListPane({
   const activeMilestoneLabel = isMilestoneFilter
     ? milestones.find((m) => m.id === phaseFilter)?.label
     : null;
+  const activeFolder = noteFolders.find((f) => f.id === phaseFilter) ?? null;
 
-  const filteredNotes = sortNotes(
-    phaseFilter === null ? notes : notes.filter((n) => n.phase === phaseFilter),
-    milestones,
-  );
+  const baseNotes = phaseFilter === null ? notes : notes.filter((n) => n.phase === phaseFilter);
+  const filteredNotes = activeFolder
+    ? sortNotesForFolder(
+        baseNotes
+          .filter((n) => !activeFolder.filterKind || n.kind === activeFolder.filterKind)
+          .filter((n) => !activeFolder.filterStatus || n.status === activeFolder.filterStatus),
+        activeFolder.sort ?? "date-desc",
+      )
+    : sortNotes(baseNotes, milestones);
 
   const startEdit = (note: Note) => {
     setEditingNoteId(note.id);
@@ -239,7 +265,7 @@ export function NoteListPane({
         {/* 全体 */}
         <button
           type="button"
-          onClick={() => setPhaseFilter(null)}
+          onClick={() => { setPhaseFilter(null); onSelectFolder(null); }}
           className={cn(
             "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
             phaseFilter === null
@@ -269,7 +295,7 @@ export function NoteListPane({
               return (
                 <DropdownMenuItem
                   key={m.id}
-                  onClick={() => setPhaseFilter(m.id)}
+                  onClick={() => { setPhaseFilter(m.id); onSelectFolder(null); }}
                   className={cn(
                     "flex items-center justify-between gap-4 text-xs",
                     phaseFilter === m.id && "font-medium",
@@ -292,7 +318,7 @@ export function NoteListPane({
             <button
               key={folder.id}
               type="button"
-              onClick={() => setPhaseFilter(folder.id)}
+              onClick={() => { setPhaseFilter(folder.id); onSelectFolder(folder.id); }}
               className={cn(
                 "flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
                 phaseFilter === folder.id

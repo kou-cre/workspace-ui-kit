@@ -5,11 +5,29 @@
 
 import { z } from "zod";
 
+// ===== メモ種別・ステータス・優先度 =====
+
+export const noteKindSchema = z.enum(["アイデア", "議論余地", "ToDo候補"]);
+export type NoteKind = z.infer<typeof noteKindSchema>;
+
+export const noteStatusSchema = z.enum(["未解決", "対応中", "解決済み"]);
+export type NoteStatus = z.infer<typeof noteStatusSchema>;
+
+export const notePrioritySchema = z.enum(["urgent", "high", "normal", "low"]);
+export type NotePriority = z.infer<typeof notePrioritySchema>;
+export const PRIORITY_ORDER = notePrioritySchema.options;
+
 // ===== メモフォルダ =====
+
+export const noteFolderSortKeySchema = z.enum(["date-desc", "date-asc", "priority-desc", "priority-asc"]);
+export type NoteFolderSortKey = z.infer<typeof noteFolderSortKeySchema>;
 
 export const noteFolderSchema = z.object({
   id: z.string(),
   label: z.string(),
+  sort: noteFolderSortKeySchema.default("date-desc"),
+  filterKind: noteKindSchema.nullable().default(null),
+  filterStatus: noteStatusSchema.nullable().default(null),
 });
 export type NoteFolder = z.infer<typeof noteFolderSchema>;
 
@@ -41,16 +59,6 @@ export const COMPLETED_STATUS = "completed";
 export const STATUS_ORDER: readonly string[] = DEFAULT_MILESTONES.map((m) => m.id);
 
 // ===== フリーメモ =====
-
-export const noteKindSchema = z.enum(["アイデア", "議論余地", "ToDo候補"]);
-export type NoteKind = z.infer<typeof noteKindSchema>;
-
-export const noteStatusSchema = z.enum(["未解決", "対応中", "解決済み"]);
-export type NoteStatus = z.infer<typeof noteStatusSchema>;
-
-export const notePrioritySchema = z.enum(["urgent", "high", "normal", "low"]);
-export type NotePriority = z.infer<typeof notePrioritySchema>;
-export const PRIORITY_ORDER = notePrioritySchema.options;
 
 export const subtaskSchema = z.object({
   id: z.string(),
