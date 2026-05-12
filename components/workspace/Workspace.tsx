@@ -16,6 +16,17 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 
 import {
   type Project,
@@ -50,6 +61,11 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [pane4ManuallyClosed, setPane4ManuallyClosed] = useState(false);
+  const [activeDrag, setActiveDrag] = useState<{ id: string; type: string; label: string } | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
 
   const activeProject =
     projects.find((p) => p.id === selectedProjectId) ?? projects[0];
@@ -296,6 +312,15 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     [updateProjectNotes],
   );
 
+  const moveActionToMilestone = useCallback(
+    (noteId: string, targetMilestoneId: string) => {
+      updateProjectNotes((notes) =>
+        notes.map((n) => (n.id === noteId ? { ...n, phase: targetMilestoneId } : n)),
+      );
+    },
+    [updateProjectNotes],
+  );
+
   const addNoteFolder = useCallback(
     (label: string) => {
       setProjects((prev) =>
@@ -465,6 +490,77 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
 
   const togglePane4 = useCallback(() => setPane4ManuallyClosed((v) => !v), []);
 
+  const handleWorkspaceDragStart = useCallback((event: DragStartEvent) => {
+    const data = event.active.data.current as { type?: string; label?: string } | undefined;
+    setActiveDrag({
+      id: event.active.id as string,
+      type: data?.type ?? "unknown",
+      label: data?.label ?? "",
+    });
+  }, []);
+
+  const handleWorkspaceDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setActiveDrag(null);
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const project = projects.find((p) => p.id === selectedProjectId);
+      if (!project) return;
+
+      const activeType = (active.data.current as { type?: string } | undefined)?.type;
+      const overData = over.data.current as { type?: string; milestoneId?: string } | undefined;
+
+      if (activeType === "milestone") {
+        if (overData?.type !== "milestone") return;
+        const ids = project.milestones.map((m) => m.id);
+        const oldIdx = ids.indexOf(active.id as string);
+        const newIdx = ids.indexOf(over.id as string);
+        if (oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx) {
+          reorderMilestones(arrayMove(ids, oldIdx, newIdx));
+        }
+        return;
+      }
+
+      if (activeType === "action") {
+        const fromMilestoneId = (active.data.current as { milestoneId?: string } | undefined)?.milestoneId;
+        let toMilestoneId: string | null = null;
+        if (overData?.type === "action" || overData?.type === "milestone-zone") {
+          toMilestoneId = overData.milestoneId ?? null;
+        } else if (overData?.type === "milestone") {
+          toMilestoneId = over.id as string;
+        }
+        if (!toMilestoneId || !fromMilestoneId) return;
+
+        if (fromMilestoneId === toMilestoneId) {
+          const actions = project.notes.filter((n) => n.isAction && n.phase === fromMilestoneId);
+          const ids = actions.map((a) => a.id);
+          const oldIdx = ids.indexOf(active.id as string);
+          const newIdx = ids.indexOf(over.id as string);
+          if (oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx) {
+            reorderActions(fromMilestoneId, arrayMove(ids, oldIdx, newIdx));
+          }
+        } else {
+          moveActionToMilestone(active.id as string, toMilestoneId);
+        }
+        return;
+      }
+
+      if (activeType === "note") {
+        let toMilestoneId: string | null = null;
+        if (overData?.type === "action" || overData?.type === "milestone-zone") {
+          toMilestoneId = overData.milestoneId ?? null;
+        } else if (overData?.type === "milestone") {
+          toMilestoneId = over.id as string;
+        }
+        if (toMilestoneId && project.milestones.some((m) => m.id === toMilestoneId)) {
+          promoteNoteToAction(active.id as string, toMilestoneId);
+        }
+      }
+    },
+    [projects, selectedProjectId, reorderMilestones, reorderActions, moveActionToMilestone, promoteNoteToAction],
+  );
+
   return (
     <SidebarProvider
       defaultOpen
@@ -486,7 +582,12 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
 
         <div className="flex min-h-0 flex-1">
           {activeProject ? (
-            <>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleWorkspaceDragStart}
+              onDragEnd={handleWorkspaceDragEnd}
+            >
               {/* Pane 2: 案件詳細 + マイルストーン + アクションプラン */}
               <ProjectDetailPane
                 key={selectedProjectId}
@@ -506,8 +607,6 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 onAddSubtask={addSubtask}
                 onToggleSubtask={toggleSubtask}
                 onDeleteSubtask={deleteSubtask}
-                onReorderActions={reorderActions}
-                onReorderMilestones={reorderMilestones}
               />
 
               {/* Pane 3: フリーメモ一覧 */}
@@ -528,8 +627,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
               />
 
               {/* Pane 4: メモフォルダ詳細・マイルストーン詳細・メモ詳細 */}
-              {pane4Open && (
-                activeFolder ? (
+              {pane4Open && (activeFolder ? (
                   <NoteFolderDetailPane
                     key={activeFolder.id}
                     folder={activeFolder}
@@ -565,7 +663,19 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                   />
                 ) : null
               )}
-            </>
+
+              <DragOverlay>
+                {activeDrag ? (
+                  <div className="max-w-48 truncate rounded-md border border-border bg-card px-3 py-2 text-xs shadow-md opacity-90">
+                    {activeDrag.label || (
+                      activeDrag.type === "note" ? "メモ"
+                      : activeDrag.type === "action" ? "タスク"
+                      : "マイルストーン"
+                    )}
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           ) : (
             <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
               左の一覧から案件を選択してください

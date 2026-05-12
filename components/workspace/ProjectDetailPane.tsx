@@ -3,19 +3,12 @@
 import { useState, useRef, useEffect, type CSSProperties, type ReactNode } from "react";
 import { Check, ChevronDown, GripVertical, Plus, Trash2, X } from "lucide-react";
 import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
   SortableContext,
   verticalListSortingStrategy,
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import { type Project, type StatusKey, type Note, type Milestone, COMPLETED_STATUS } from "@/lib/schema";
@@ -38,10 +31,37 @@ import {
 } from "@/components/primitives/InlineComboboxField";
 import { InlineSelectField } from "@/components/primitives/InlineSelectField";
 
+// ===== MilestoneDropZone =====
+
+function MilestoneDropZone({
+  milestoneId,
+  children,
+}: {
+  milestoneId: string;
+  children: ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `drop-${milestoneId}`,
+    data: { type: "milestone-zone", milestoneId },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "rounded-md transition-colors",
+        isOver && "bg-primary/5 ring-1 ring-inset ring-primary/20",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 // ===== SortableActionRow =====
 
 type SortableActionRowProps = {
   action: Note;
+  milestoneId: string;
   editingActionId: string | null;
   editingText: string;
   subtaskInputs: Record<string, string>;
@@ -60,6 +80,7 @@ type SortableActionRowProps = {
 
 function SortableActionRow({
   action,
+  milestoneId,
   editingActionId,
   editingText,
   subtaskInputs,
@@ -77,6 +98,7 @@ function SortableActionRow({
 }: SortableActionRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: action.id,
+    data: { type: "action", milestoneId, label: action.text || "タスク" },
   });
 
   const style: CSSProperties = {
@@ -136,7 +158,6 @@ function SortableActionRow({
           </span>
         )}
 
-        {/* あと何日 */}
         {!action.done && action.date && (() => {
           const label = getDaysLabel(action.date);
           if (!label) return null;
@@ -254,7 +275,7 @@ function SortableMilestoneWrapper({
   }) => ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
+    useSortable({ id, data: { type: "milestone" } });
   return (
     <div
       ref={setNodeRef}
@@ -290,8 +311,6 @@ type ProjectDetailPaneProps = {
   onAddSubtask: (noteId: string, text: string) => void;
   onToggleSubtask: (noteId: string, subtaskId: string) => void;
   onDeleteSubtask: (noteId: string, subtaskId: string) => void;
-  onReorderActions: (phase: StatusKey, orderedIds: string[]) => void;
-  onReorderMilestones: (orderedIds: string[]) => void;
 };
 
 export function ProjectDetailPane({
@@ -311,8 +330,6 @@ export function ProjectDetailPane({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
-  onReorderActions,
-  onReorderMilestones,
 }: ProjectDetailPaneProps) {
   const [openMilestones, setOpenMilestones] = useState<Set<string>>(
     new Set([project.status]),
@@ -322,24 +339,16 @@ export function ProjectDetailPane({
   const [editingText, setEditingText] = useState("");
   const [subtaskInputs, setSubtaskInputs] = useState<Record<string, string>>({});
 
-  // マイルストーン名編集
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
   const [editingMilestoneName, setEditingMilestoneName] = useState("");
 
-  // マイルストーン追加
   const [showAddMilestone, setShowAddMilestone] = useState(false);
   const [newMilestoneName, setNewMilestoneName] = useState("");
 
-  // マイルストーン右クリックメニュー
   const [msCtxMenu, setMsCtxMenu] = useState<{ id: string; label: string; x: number; y: number } | null>(null);
   const msCtxRef = useRef<HTMLDivElement>(null);
 
-  // マイルストーン削除確認
   const [deletingMilestone, setDeletingMilestone] = useState<{ id: string; label: string } | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-  );
 
   const milestones = project.milestones;
   const isAllCompleted = project.status === COMPLETED_STATUS;
@@ -415,7 +424,6 @@ export function ProjectDetailPane({
     setOpenMilestones((prev) => new Set([...prev, id]));
   };
 
-  // マイルストーンコンテキストメニューの外クリック・Esc で閉じる
   useEffect(() => {
     if (!msCtxMenu) return;
     const onDown = (e: MouseEvent) => {
@@ -435,35 +443,14 @@ export function ProjectDetailPane({
 
   const handleMilestoneCircleClick = (milestoneId: string, msIdx: number, isCurrent: boolean) => {
     if (isCurrent) {
-      // 進行中 → 完了：最後なら全完了、そうでなければ次へ進む
       if (msIdx === milestones.length - 1) {
         onUpdateProjectStatus(COMPLETED_STATUS);
       } else {
         onUpdateProjectStatus(milestones[msIdx + 1].id);
       }
     } else {
-      // 完了済み or 未着手 → この마イルストーンを進行中に戻す
       onUpdateProjectStatus(milestoneId);
     }
-  };
-
-  const handleDragEnd =
-    (milestoneId: string, actions: Note[]) => (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const ids = actions.map((a) => a.id);
-      const oldIndex = ids.indexOf(active.id as string);
-      const newIndex = ids.indexOf(over.id as string);
-      onReorderActions(milestoneId, arrayMove(ids, oldIndex, newIndex));
-    };
-
-  const handleMilestoneDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const ids = milestones.map((m) => m.id);
-    const oldIndex = ids.indexOf(active.id as string);
-    const newIndex = ids.indexOf(over.id as string);
-    onReorderMilestones(arrayMove(ids, oldIndex, newIndex));
   };
 
   return (
@@ -573,15 +560,10 @@ export function ProjectDetailPane({
       {/* マイルストーン縦並びアコーディオン */}
       <ScrollArea className="flex-1">
         <div className="flex flex-col px-4 py-3">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleMilestoneDragEnd}
+          <SortableContext
+            items={milestones.map((m) => m.id)}
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext
-              items={milestones.map((m) => m.id)}
-              strategy={verticalListSortingStrategy}
-            >
           {milestones.map((milestone, idx) => {
             const msIdx = idx;
             const isCompleted = msIdx < currentMilestoneIndex;
@@ -627,7 +609,7 @@ export function ProjectDetailPane({
                   onOpenChange={(open) => toggleMilestone(milestone.id, open)}
                   className="mb-3 min-w-0 flex-1"
                 >
-                  {/* ヘッダー行: ドラッグハンドル + 開閉エリア */}
+                  {/* ヘッダー行 */}
                   <div className={cn(
                     "group flex items-center gap-1.5 rounded-md py-1 hover:bg-accent/40",
                     selectedMilestoneId === milestone.id && "bg-accent/40",
@@ -741,17 +723,13 @@ export function ProjectDetailPane({
                   )}
 
                   <CollapsibleContent>
-                    <div className="flex flex-col gap-2 pb-2 pt-1">
-                      {actions.length === 0 ? (
-                        <p className="py-2 text-xs text-muted-foreground">
-                          アクションはまだありません
-                        </p>
-                      ) : (
-                        <DndContext
-                          sensors={sensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={handleDragEnd(milestone.id, actions)}
-                        >
+                    <MilestoneDropZone milestoneId={milestone.id}>
+                      <div className="flex flex-col gap-2 pb-2 pt-1">
+                        {actions.length === 0 ? (
+                          <p className="py-2 text-xs text-muted-foreground">
+                            アクションはまだありません（ここにドロップ可）
+                          </p>
+                        ) : (
                           <SortableContext
                             items={actions.map((a) => a.id)}
                             strategy={verticalListSortingStrategy}
@@ -760,6 +738,7 @@ export function ProjectDetailPane({
                               <SortableActionRow
                                 key={action.id}
                                 action={action}
+                                milestoneId={milestone.id}
                                 editingActionId={editingActionId}
                                 editingText={editingText}
                                 subtaskInputs={subtaskInputs}
@@ -798,36 +777,36 @@ export function ProjectDetailPane({
                               />
                             ))}
                           </SortableContext>
-                        </DndContext>
-                      )}
+                        )}
 
-                      {/* アクション追加 */}
-                      <div className="flex gap-2 pt-1">
-                        <Input
-                          value={getNewActionText(milestone.id)}
-                          onChange={(e) =>
-                            setNewActionTexts((prev) => ({
-                              ...prev,
-                              [milestone.id]: e.target.value,
-                            }))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleAddAction(milestone.id);
-                          }}
-                          placeholder="アクションを追加..."
-                          className="h-7 flex-1 bg-card text-xs"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddAction(milestone.id)}
-                          disabled={!getNewActionText(milestone.id).trim()}
-                          className="h-7 px-2 text-xs"
-                        >
-                          <Plus />
-                          追加
-                        </Button>
+                        {/* アクション追加 */}
+                        <div className="flex gap-2 pt-1">
+                          <Input
+                            value={getNewActionText(milestone.id)}
+                            onChange={(e) =>
+                              setNewActionTexts((prev) => ({
+                                ...prev,
+                                [milestone.id]: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleAddAction(milestone.id);
+                            }}
+                            placeholder="アクションを追加..."
+                            className="h-7 flex-1 bg-card text-xs"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleAddAction(milestone.id)}
+                            disabled={!getNewActionText(milestone.id).trim()}
+                            className="h-7 px-2 text-xs"
+                          >
+                            <Plus />
+                            追加
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    </MilestoneDropZone>
                   </CollapsibleContent>
                 </Collapsible>
               </div>
@@ -835,8 +814,7 @@ export function ProjectDetailPane({
               </SortableMilestoneWrapper>
             );
           })}
-            </SortableContext>
-          </DndContext>
+          </SortableContext>
 
           {/* マイルストーン追加 */}
           {showAddMilestone ? (

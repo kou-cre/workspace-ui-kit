@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ArrowRight, Check, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, GripVertical, Plus, Trash2 } from "lucide-react";
+import { useDraggable } from "@dnd-kit/core";
 
 import { type Note, type StatusKey, type NotePriority, type NoteKind, type NoteStatus, type Milestone, type NoteFolder, PRIORITY_ORDER } from "@/lib/schema";
 import { PRIORITY_LABELS } from "@/lib/labels";
@@ -157,6 +158,199 @@ function NoteContextMenu({
   );
 }
 
+// ===== NoteRow (draggable) =====
+
+type NoteRowProps = {
+  note: Note;
+  isSelected: boolean;
+  editingNoteId: string | null;
+  editingText: string;
+  milestones: Milestone[];
+  getMilestoneLabel: (phase: string | null) => string | null;
+  onSelectNote: () => void;
+  onStartEdit: () => void;
+  onEditChange: (v: string) => void;
+  onCommitEdit: () => void;
+  onCancelEdit: () => void;
+  onToggleStatus: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onPromoteToAction: (phase: StatusKey) => void;
+};
+
+function NoteRow({
+  note,
+  isSelected,
+  editingNoteId,
+  editingText,
+  milestones,
+  getMilestoneLabel,
+  onSelectNote,
+  onStartEdit,
+  onEditChange,
+  onCommitEdit,
+  onCancelEdit,
+  onToggleStatus,
+  onContextMenu,
+  onPromoteToAction,
+}: NoteRowProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: note.id,
+    data: { type: "note", label: note.text || "メモ" },
+  });
+
+  const isEditing = editingNoteId === note.id;
+  const milestoneLabel = getMilestoneLabel(note.phase);
+
+  return (
+    <div
+      ref={setNodeRef}
+      onContextMenu={onContextMenu}
+      style={{ opacity: isDragging ? 0.4 : 1 }}
+      className={cn(
+        "group flex items-start gap-2 px-4 py-3 transition-colors",
+        isSelected && "bg-accent",
+      )}
+    >
+      {/* ドラッグハンドル */}
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="mt-1 cursor-grab touch-none text-muted-foreground opacity-0 transition-opacity active:cursor-grabbing focus-visible:opacity-100 group-hover:opacity-100"
+        aria-label="ドラッグしてマイルストーンに移動"
+      >
+        <GripVertical className="size-4" />
+      </button>
+
+      <Checkbox
+        id={`note-status-${note.id}`}
+        checked={note.status === "解決済み"}
+        indeterminate={note.status === "対応中"}
+        onCheckedChange={onToggleStatus}
+        aria-label="ステータスを切り替え"
+        className="mt-1 shrink-0"
+      />
+
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        {/* バッジ行 */}
+        <button
+          type="button"
+          onClick={onSelectNote}
+          className="flex flex-wrap items-center gap-1.5 text-left hover:opacity-80"
+        >
+          {note.priority === "urgent" && (
+            <Badge variant="default" size="xs" className="bg-destructive text-destructive-foreground">
+              緊急
+            </Badge>
+          )}
+          {note.priority === "high" && (
+            <Badge variant="secondary" size="xs">重要</Badge>
+          )}
+          <Badge variant={KIND_VARIANT[note.kind]} size="xs">
+            {note.kind}
+          </Badge>
+          <Badge
+            variant={note.status === "解決済み" ? "delivered" : "outline"}
+            size="xs"
+          >
+            {note.status}
+          </Badge>
+          {milestoneLabel && (
+            <Badge variant="secondary" size="xs">
+              {milestoneLabel}
+            </Badge>
+          )}
+          {note.isAction && (
+            <Badge variant="default" size="xs">アクション</Badge>
+          )}
+          {(() => {
+            const done = isDone(note);
+            if (done || !note.date) {
+              return (
+                <span className="ml-auto text-[11px] text-muted-foreground">
+                  {note.date}
+                </span>
+              );
+            }
+            const label = getDaysLabel(note.date);
+            if (!label) return <span className="ml-auto text-[11px] text-muted-foreground">{note.date}</span>;
+            const isOverdue = label.includes("超過");
+            const isToday = label === "今日";
+            return (
+              <span
+                title={note.date}
+                className={cn(
+                  "ml-auto text-[11px] tabular-nums",
+                  isOverdue ? "text-destructive" : isToday ? "font-medium text-primary" : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </span>
+            );
+          })()}
+        </button>
+
+        {/* テキスト行 */}
+        {isEditing ? (
+          <Input
+            autoFocus
+            value={editingText}
+            onChange={(e) => onEditChange(e.target.value)}
+            onBlur={onCommitEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); onCommitEdit(); }
+              if (e.key === "Escape") onCancelEdit();
+            }}
+            placeholder="メモの内容を入力..."
+            className="h-7 bg-background text-sm"
+          />
+        ) : (
+          <p
+            role="button"
+            tabIndex={0}
+            onClick={onStartEdit}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onStartEdit(); }}
+            className={cn(
+              "cursor-text rounded px-0.5 text-sm leading-relaxed hover:bg-accent/50",
+              note.status === "解決済み"
+                ? "text-muted-foreground line-through"
+                : note.text ? "text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {note.text || "未記入"}
+          </p>
+        )}
+      </div>
+
+      {/* ホバーボタン: マイルストーンに登録 */}
+      {!note.isAction && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={cn(
+              "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground",
+              "opacity-0 focus-visible:opacity-100 group-hover:opacity-100",
+            )}
+            aria-label="マイルストーンに登録"
+          >
+            <ArrowRight className="size-3.5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-xs">登録先マイルストーン</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {milestones.map((m) => (
+                <DropdownMenuItem key={m.id} onClick={() => onPromoteToAction(m.id)}>
+                  {m.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+}
+
 // ===== NoteListPane =====
 
 type NoteListPaneProps = {
@@ -196,7 +390,6 @@ export function NoteListPane({
   const [ctxMenu, setCtxMenu] = useState<CtxState>(null);
   const [addingFolder, setAddingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const isMilestoneFilter = milestones.some((m) => m.id === phaseFilter);
   const activeMilestoneLabel = isMilestoneFilter
@@ -388,156 +581,34 @@ export function NoteListPane({
                 ? `${getMilestoneLabel(phaseFilter) ?? phaseFilter}のメモはまだありません`
                 : "メモはまだありません"}
             </p>
-            <Button variant="outline" size="sm" onClick={() => onAddNote(phaseFilter)}>
+            <Button variant="outline" size="sm" onClick={handleAddNote}>
               <Plus />
               最初のメモを追加
             </Button>
           </div>
         ) : (
           <div className="flex flex-col">
-            {filteredNotes.map((note, idx) => {
-              const isEditing = editingNoteId === note.id;
-              const milestoneLabel = getMilestoneLabel(note.phase);
-              return (
-                <div key={note.id}>
-                  <div
-                    onContextMenu={(e) => handleContextMenu(e, note)}
-                    className={cn(
-                      "group flex items-start gap-3 px-4 py-3 transition-colors",
-                      selectedNoteId === note.id && "bg-accent",
-                    )}
-                  >
-                    <Checkbox
-                      id={`note-status-${note.id}`}
-                      checked={note.status === "解決済み"}
-                      indeterminate={note.status === "対応中"}
-                      onCheckedChange={() => onToggleNoteStatus(note.id)}
-                      aria-label="ステータスを切り替え"
-                      className="mt-1 shrink-0"
-                    />
-
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      {/* バッジ行 */}
-                      <button
-                        type="button"
-                        onClick={() => onSelectNote(note.id)}
-                        className="flex flex-wrap items-center gap-1.5 text-left hover:opacity-80"
-                      >
-                        {note.priority === "urgent" && (
-                          <Badge variant="default" size="xs" className="bg-destructive text-destructive-foreground">
-                            緊急
-                          </Badge>
-                        )}
-                        {note.priority === "high" && (
-                          <Badge variant="secondary" size="xs">重要</Badge>
-                        )}
-                        <Badge variant={KIND_VARIANT[note.kind]} size="xs">
-                          {note.kind}
-                        </Badge>
-                        <Badge
-                          variant={note.status === "解決済み" ? "delivered" : "outline"}
-                          size="xs"
-                        >
-                          {note.status}
-                        </Badge>
-                        {milestoneLabel && (
-                          <Badge variant="secondary" size="xs">
-                            {milestoneLabel}
-                          </Badge>
-                        )}
-                        {note.isAction && (
-                          <Badge variant="default" size="xs">アクション</Badge>
-                        )}
-                        {(() => {
-                          const done = isDone(note);
-                          if (done || !note.date) {
-                            return (
-                              <span className="ml-auto text-[11px] text-muted-foreground">
-                                {note.date}
-                              </span>
-                            );
-                          }
-                          const label = getDaysLabel(note.date);
-                          if (!label) return <span className="ml-auto text-[11px] text-muted-foreground">{note.date}</span>;
-                          const isOverdue = label.includes("超過");
-                          const isToday = label === "今日";
-                          return (
-                            <span
-                              title={note.date}
-                              className={cn(
-                                "ml-auto text-[11px] tabular-nums",
-                                isOverdue ? "text-destructive" : isToday ? "font-medium text-primary" : "text-muted-foreground",
-                              )}
-                            >
-                              {label}
-                            </span>
-                          );
-                        })()}
-                      </button>
-
-                      {/* テキスト行 */}
-                      {isEditing ? (
-                        <Input
-                          ref={inputRef}
-                          autoFocus
-                          value={editingText}
-                          onChange={(e) => setEditingText(e.target.value)}
-                          onBlur={() => commitEdit(note.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") { e.preventDefault(); commitEdit(note.id); }
-                            if (e.key === "Escape") cancelEdit();
-                          }}
-                          placeholder="メモの内容を入力..."
-                          className="h-7 bg-background text-sm"
-                        />
-                      ) : (
-                        <p
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => startEdit(note)}
-                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") startEdit(note); }}
-                          className={cn(
-                            "cursor-text rounded px-0.5 text-sm leading-relaxed hover:bg-accent/50",
-                            note.status === "解決済み"
-                              ? "text-muted-foreground line-through"
-                              : note.text ? "text-foreground" : "text-muted-foreground",
-                          )}
-                        >
-                          {note.text || "未記入"}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* ホバーボタン: マイルストーンに登録 */}
-                    {!note.isAction && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          className={cn(
-                            "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground",
-                            "opacity-0 focus-visible:opacity-100 group-hover:opacity-100",
-                          )}
-                          aria-label="マイルストーンに登録"
-                        >
-                          <ArrowRight className="size-3.5" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuGroup>
-                            <DropdownMenuLabel className="text-xs">登録先マイルストーン</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {milestones.map((m) => (
-                              <DropdownMenuItem key={m.id} onClick={() => onPromoteToAction(note.id, m.id)}>
-                                {m.label}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                  {idx < filteredNotes.length - 1 && <Separator />}
-                </div>
-              );
-            })}
+            {filteredNotes.map((note, idx) => (
+              <div key={note.id}>
+                <NoteRow
+                  note={note}
+                  isSelected={selectedNoteId === note.id}
+                  editingNoteId={editingNoteId}
+                  editingText={editingText}
+                  milestones={milestones}
+                  getMilestoneLabel={getMilestoneLabel}
+                  onSelectNote={() => onSelectNote(note.id)}
+                  onStartEdit={() => startEdit(note)}
+                  onEditChange={setEditingText}
+                  onCommitEdit={() => commitEdit(note.id)}
+                  onCancelEdit={cancelEdit}
+                  onToggleStatus={() => onToggleNoteStatus(note.id)}
+                  onContextMenu={(e) => handleContextMenu(e, note)}
+                  onPromoteToAction={(phase) => onPromoteToAction(note.id, phase)}
+                />
+                {idx < filteredNotes.length - 1 && <Separator />}
+              </div>
+            ))}
           </div>
         )}
       </ScrollArea>
