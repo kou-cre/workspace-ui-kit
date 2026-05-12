@@ -8,7 +8,7 @@ import {
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { useDroppable } from "@dnd-kit/core";
+import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import { type Project, type StatusKey, type Note, type Milestone, COMPLETED_STATUS } from "@/lib/schema";
@@ -40,16 +40,23 @@ function MilestoneDropZone({
   milestoneId: string;
   children: ReactNode;
 }) {
+  const { active } = useDndContext();
   const { setNodeRef, isOver } = useDroppable({
     id: `drop-${milestoneId}`,
     data: { type: "milestone-zone", milestoneId },
   });
+  const showHint = active !== null && active.data.current?.type !== "milestone";
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-md transition-colors",
-        isOver && "bg-primary/5 ring-1 ring-inset ring-primary/20",
+        "rounded-md transition-all duration-150",
+        isOver
+          ? "bg-primary/10 ring-2 ring-inset ring-primary/50"
+          : showHint
+          ? "ring-1 ring-inset ring-dashed ring-primary/30"
+          : "",
       )}
     >
       {children}
@@ -96,7 +103,7 @@ function SortableActionRow({
   onToggleSubtask,
   onDeleteSubtask,
 }: SortableActionRowProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
     id: action.id,
     data: { type: "action", milestoneId, label: action.text || "タスク" },
   });
@@ -111,6 +118,9 @@ function SortableActionRow({
 
   return (
     <div ref={setNodeRef} style={style} className="flex flex-col gap-1">
+      {isOver && !isDragging && (
+        <div className="h-0.5 rounded-full bg-primary" />
+      )}
       <div className="group flex items-start gap-2">
         <button
           type="button"
@@ -274,7 +284,7 @@ function SortableMilestoneWrapper({
     listeners: ReturnType<typeof useSortable>["listeners"];
   }) => ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
     useSortable({ id, data: { type: "milestone" } });
   return (
     <div
@@ -287,6 +297,9 @@ function SortableMilestoneWrapper({
         opacity: isDragging ? 0.4 : 1,
       }}
     >
+      {isOver && !isDragging && (
+        <div className="mb-1 h-0.5 rounded-full bg-primary" />
+      )}
       {children({ attributes, listeners })}
     </div>
   );

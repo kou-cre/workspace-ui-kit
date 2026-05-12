@@ -16,6 +16,7 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
+import { GripVertical } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -664,14 +665,17 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 ) : null
               )}
 
-              <DragOverlay>
+              <DragOverlay dropAnimation={null}>
                 {activeDrag ? (
-                  <div className="max-w-48 truncate rounded-md border border-border bg-card px-3 py-2 text-xs shadow-md opacity-90">
-                    {activeDrag.label || (
-                      activeDrag.type === "note" ? "メモ"
-                      : activeDrag.type === "action" ? "タスク"
-                      : "マイルストーン"
-                    )}
+                  <div className="flex max-w-56 items-center gap-2 rounded-lg border border-primary/30 bg-card px-3 py-2 text-sm shadow-xl ring-2 ring-primary/20 rotate-1 opacity-95">
+                    <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">
+                      {activeDrag.label || (
+                        activeDrag.type === "note" ? "メモ"
+                        : activeDrag.type === "action" ? "タスク"
+                        : "マイルストーン"
+                      )}
+                    </span>
                   </div>
                 ) : null}
               </DragOverlay>
