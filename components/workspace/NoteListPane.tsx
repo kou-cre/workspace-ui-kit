@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowRight, Check, ChevronDown, Plus, Trash2 } from "lucide-react";
 
-import { type Note, type StatusKey, type NotePriority, type Milestone, type NoteFolder, PRIORITY_ORDER } from "@/lib/schema";
+import { type Note, type StatusKey, type NotePriority, type NoteKind, type NoteStatus, type Milestone, type NoteFolder, PRIORITY_ORDER } from "@/lib/schema";
 import { PRIORITY_LABELS } from "@/lib/labels";
 import { getDaysLabel } from "@/lib/computed/profile";
 import { cn } from "@/lib/utils";
@@ -165,7 +165,7 @@ type NoteListPaneProps = {
   noteFolders: NoteFolder[];
   selectedNoteId: string | null;
   onSelectNote: (id: string) => void;
-  onAddNote: (phase?: StatusKey | null) => void;
+  onAddNote: (phase?: StatusKey | null, defaults?: { kind?: NoteKind; status?: NoteStatus }) => void;
   onToggleNoteStatus: (id: string) => void;
   onUpdateNoteText: (id: string, text: string) => void;
   onUpdateNotePriority: (id: string, priority: string) => void;
@@ -214,6 +214,15 @@ export function NoteListPane({
       )
     : sortNotes(baseNotes, milestones);
 
+  const handleAddNote = () => {
+    onAddNote(
+      phaseFilter,
+      activeFolder
+        ? { kind: activeFolder.filterKind ?? undefined, status: activeFolder.filterStatus ?? undefined }
+        : undefined,
+    );
+  };
+
   const startEdit = (note: Note) => {
     setEditingNoteId(note.id);
     setEditingText(note.text);
@@ -252,7 +261,7 @@ export function NoteListPane({
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={() => onAddNote(phaseFilter)}
+          onClick={handleAddNote}
           aria-label="メモを追加"
           className="size-7 text-muted-foreground hover:text-foreground"
         >

@@ -392,12 +392,12 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   }, []);
 
   const addNote = useCallback(
-    (phase: StatusKey | null = null) => {
+    (phase: StatusKey | null = null, defaults?: { kind?: NoteKind; status?: NoteStatus }) => {
       const newNote: Note = {
         id: `n-${Date.now()}`,
         date: new Date().toISOString().split("T")[0],
-        kind: "アイデア" as NoteKind,
-        status: "未解決" as NoteStatus,
+        kind: defaults?.kind ?? "アイデア",
+        status: defaults?.status ?? "未解決",
         phase,
         priority: "normal",
         isAction: false,
