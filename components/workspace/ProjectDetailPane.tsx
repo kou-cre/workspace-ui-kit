@@ -18,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { type Project, type StatusKey, type Note, type Milestone } from "@/lib/schema";
+import { type Project, type StatusKey, type Note, type Milestone, COMPLETED_STATUS } from "@/lib/schema";
 import { getMilestoneBadgeVariant } from "@/lib/labels";
 import { getDaysLabel } from "@/lib/computed/profile";
 import { cn } from "@/lib/utils";
@@ -338,7 +338,10 @@ export function ProjectDetailPane({
   );
 
   const milestones = project.milestones;
-  const currentMilestoneIndex = milestones.findIndex((m) => m.id === project.status);
+  const isAllCompleted = project.status === COMPLETED_STATUS;
+  const currentMilestoneIndex = isAllCompleted
+    ? milestones.length
+    : milestones.findIndex((m) => m.id === project.status);
 
   const allActions = project.notes.filter((n) => n.isAction);
   const totalActions = allActions.length;
@@ -421,8 +424,23 @@ export function ProjectDetailPane({
   }, [msCtxMenu]);
 
   const handleStatusSave = (label: string) => {
+    if (label === "完了") { onUpdateProjectStatus(COMPLETED_STATUS); return; }
     const m = milestones.find((ms) => ms.label === label);
     if (m) onUpdateProjectStatus(m.id);
+  };
+
+  const handleMilestoneCircleClick = (milestoneId: string, msIdx: number, isCurrent: boolean) => {
+    if (isCurrent) {
+      // 進行中 → 完了：最後なら全完了、そうでなければ次へ進む
+      if (msIdx === milestones.length - 1) {
+        onUpdateProjectStatus(COMPLETED_STATUS);
+      } else {
+        onUpdateProjectStatus(milestones[msIdx + 1].id);
+      }
+    } else {
+      // 完了済み or 未着手 → この마イルストーンを進行中に戻す
+      onUpdateProjectStatus(milestoneId);
+    }
   };
 
   const handleDragEnd =
@@ -519,8 +537,8 @@ export function ProjectDetailPane({
           <p className="text-xs text-muted-foreground">ステータス</p>
           {milestones.length > 0 ? (
             <InlineSelectField
-              value={milestones.find((m) => m.id === project.status)?.label ?? "未設定"}
-              options={milestones.map((m) => m.label)}
+              value={isAllCompleted ? "完了" : (milestones.find((m) => m.id === project.status)?.label ?? "未設定")}
+              options={[...milestones.map((m) => m.label), "完了"]}
               onSave={handleStatusSave}
               ariaLabel="プロジェクトステータス"
             />
@@ -563,7 +581,7 @@ export function ProjectDetailPane({
           {milestones.map((milestone, idx) => {
             const msIdx = idx;
             const isCompleted = msIdx < currentMilestoneIndex;
-            const isCurrent = msIdx === currentMilestoneIndex;
+            const isCurrent = !isAllCompleted && msIdx === currentMilestoneIndex;
             const isOpen = openMilestones.has(milestone.id);
             const actions = getMilestoneActions(milestone.id);
             const doneCount = actions.filter((a) => a.done).length;
@@ -577,8 +595,8 @@ export function ProjectDetailPane({
                 <div className="flex flex-col items-center pt-3">
                   <button
                     type="button"
-                    onClick={() => onUpdateProjectStatus(milestone.id)}
-                    aria-label={`${milestone.label}を現在のマイルストーンに設定`}
+                    onClick={() => handleMilestoneCircleClick(milestone.id, msIdx, isCurrent)}
+                    aria-label={isCurrent ? `${milestone.label}を完了にする` : `${milestone.label}を進行中にする`}
                     className={cn(
                       "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       isCompleted || isCurrent

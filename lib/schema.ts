@@ -25,6 +25,9 @@ export const DEFAULT_MILESTONES: Milestone[] = [
 /** 後方互換: フェーズキーは文字列。 */
 export type StatusKey = string;
 
+/** 全マイルストーン完了を表す特殊ステータス値。 */
+export const COMPLETED_STATUS = "completed";
+
 /** デフォルトマイルストーンの ID 順（後方互換・デフォルトソート）。 */
 export const STATUS_ORDER: readonly string[] = DEFAULT_MILESTONES.map((m) => m.id);
 
