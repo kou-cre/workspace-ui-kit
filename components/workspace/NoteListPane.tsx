@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ArrowRight, Check, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Plus, Trash2 } from "lucide-react";
 
-import { type Note, type StatusKey, type NotePriority, type Milestone, PRIORITY_ORDER } from "@/lib/schema";
+import { type Note, type StatusKey, type NotePriority, type Milestone, type NoteFolder, PRIORITY_ORDER } from "@/lib/schema";
 import { PRIORITY_LABELS } from "@/lib/labels";
 import { getDaysLabel } from "@/lib/computed/profile";
 import { cn } from "@/lib/utils";
@@ -144,6 +144,7 @@ function NoteContextMenu({
 type NoteListPaneProps = {
   notes: Note[];
   milestones: Milestone[];
+  noteFolders: NoteFolder[];
   selectedNoteId: string | null;
   onSelectNote: (id: string) => void;
   onAddNote: (phase?: StatusKey | null) => void;
@@ -152,11 +153,13 @@ type NoteListPaneProps = {
   onUpdateNotePriority: (id: string, priority: string) => void;
   onPromoteToAction: (id: string, phase: StatusKey) => void;
   onDeleteNote: (id: string) => void;
+  onAddNoteFolder: (label: string) => void;
 };
 
 export function NoteListPane({
   notes,
   milestones,
+  noteFolders,
   selectedNoteId,
   onSelectNote,
   onAddNote,
@@ -165,12 +168,22 @@ export function NoteListPane({
   onUpdateNotePriority,
   onPromoteToAction,
   onDeleteNote,
+  onAddNoteFolder,
 }: NoteListPaneProps) {
   const [phaseFilter, setPhaseFilter] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [ctxMenu, setCtxMenu] = useState<CtxState>(null);
+  const [milestoneMenuOpen, setMilestoneMenuOpen] = useState(false);
+  const [addingFolder, setAddingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const milestoneMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isMilestoneFilter = milestones.some((m) => m.id === phaseFilter);
+  const activeMilestoneLabel = isMilestoneFilter
+    ? milestones.find((m) => m.id === phaseFilter)?.label
+    : null;
 
   const filteredNotes = sortNotes(
     phaseFilter === null ? notes : notes.filter((n) => n.phase === phaseFilter),
@@ -217,9 +230,11 @@ export function NoteListPane({
         </Button>
       </div>
 
-      {/* マイルストーンフィルター */}
-      <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-3 py-2">
+      {/* フォルダフィルター */}
+      <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border px-3 py-2">
+        {/* 全体 */}
         <button
+          type="button"
           onClick={() => setPhaseFilter(null)}
           className={cn(
             "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
@@ -230,28 +245,106 @@ export function NoteListPane({
         >
           全体
         </button>
-        {milestones.map((milestone) => {
-          const count = notes.filter((n) => n.phase === milestone.id).length;
+
+        {/* マイルストーン（ホバードロップダウン） */}
+        <div
+          ref={milestoneMenuRef}
+          className="relative shrink-0"
+          onMouseEnter={() => setMilestoneMenuOpen(true)}
+          onMouseLeave={() => setMilestoneMenuOpen(false)}
+        >
+          <button
+            type="button"
+            className={cn(
+              "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
+              isMilestoneFilter
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            {activeMilestoneLabel ?? "マイルストーン"}
+            <ChevronDown className={cn("size-3 transition-transform", milestoneMenuOpen && "rotate-180")} />
+          </button>
+          {milestoneMenuOpen && (
+            <div className="absolute left-0 top-full z-20 mt-1 flex min-w-28 flex-col rounded-md border border-border bg-popover p-1 shadow-md">
+              {milestones.map((m) => {
+                const count = notes.filter((n) => n.phase === m.id).length;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => { setPhaseFilter(m.id); setMilestoneMenuOpen(false); }}
+                    className={cn(
+                      "flex items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent",
+                      phaseFilter === m.id && "bg-accent font-medium",
+                    )}
+                  >
+                    <span>{m.label}</span>
+                    {count > 0 && <span className="tabular-nums text-muted-foreground">{count}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* カスタムフォルダ */}
+        {noteFolders.map((folder) => {
+          const count = notes.filter((n) => n.phase === folder.id).length;
           return (
             <button
-              key={milestone.id}
-              onClick={() => setPhaseFilter(milestone.id)}
+              key={folder.id}
+              type="button"
+              onClick={() => setPhaseFilter(folder.id)}
               className={cn(
                 "flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
-                phaseFilter === milestone.id
+                phaseFilter === folder.id
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
-              {milestone.label}
+              {folder.label}
               {count > 0 && (
-                <span className={cn("tabular-nums", phaseFilter === milestone.id ? "opacity-80" : "opacity-60")}>
+                <span className={cn("tabular-nums", phaseFilter === folder.id ? "opacity-80" : "opacity-60")}>
                   {count}
                 </span>
               )}
             </button>
           );
         })}
+
+        {/* フォルダ追加 */}
+        {addingFolder ? (
+          <input
+            autoFocus
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const t = newFolderName.trim();
+                if (t) { onAddNoteFolder(t); setNewFolderName(""); setAddingFolder(false); }
+              }
+              if (e.key === "Escape") { setNewFolderName(""); setAddingFolder(false); }
+            }}
+            onBlur={() => {
+              const t = newFolderName.trim();
+              if (t) onAddNoteFolder(t);
+              setNewFolderName("");
+              setAddingFolder(false);
+            }}
+            placeholder="フォルダ名..."
+            className="h-5 w-24 shrink-0 rounded-sm border border-border bg-background px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAddingFolder(true)}
+            aria-label="フォルダを追加"
+            className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <Plus className="size-3" />
+          </button>
+        )}
       </div>
 
       {/* メモ一覧 */}

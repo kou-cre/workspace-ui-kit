@@ -263,6 +263,19 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     [updateProjectNotes],
   );
 
+  const addNoteFolder = useCallback(
+    (label: string) => {
+      setProjects((prev) =>
+        prev.map((p) => {
+          if (p.id !== selectedProjectId) return p;
+          const id = `folder-${Date.now()}`;
+          return { ...p, noteFolders: [...(p.noteFolders ?? []), { id, label }] };
+        }),
+      );
+    },
+    [selectedProjectId],
+  );
+
   const reorderMilestones = useCallback(
     (orderedIds: string[]) => {
       setProjects((prev) =>
@@ -424,6 +437,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
               <NoteListPane
                 notes={activeProject.notes}
                 milestones={activeProject.milestones}
+                noteFolders={activeProject.noteFolders ?? []}
                 selectedNoteId={selectedNoteId}
                 onSelectNote={selectNote}
                 onAddNote={addNote}
@@ -432,6 +446,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 onUpdateNotePriority={(id, priority) => updateNote(id, "priority", priority)}
                 onPromoteToAction={promoteNoteToAction}
                 onDeleteNote={deleteNote}
+                onAddNoteFolder={addNoteFolder}
               />
 
               {/* Pane 4: メモ詳細（メモ選択時のみ表示） */}

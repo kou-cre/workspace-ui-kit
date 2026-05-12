@@ -5,6 +5,14 @@
 
 import { z } from "zod";
 
+// ===== メモフォルダ =====
+
+export const noteFolderSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+});
+export type NoteFolder = z.infer<typeof noteFolderSchema>;
+
 // ===== マイルストーン =====
 
 export const milestoneSchema = z.object({
@@ -72,6 +80,7 @@ export const projectSchema = z.object({
   clients: z.array(z.string()).default([]),
   status: z.string(),
   milestones: z.array(milestoneSchema).default(DEFAULT_MILESTONES),
+  noteFolders: z.array(noteFolderSchema).default([]),
   notes: z.array(noteSchema),
 });
 export type Project = z.infer<typeof projectSchema>;
