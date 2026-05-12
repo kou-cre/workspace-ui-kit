@@ -111,17 +111,20 @@ function SortableActionRow({
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.3 : 1,
   };
 
   const isEditing = editingActionId === action.id;
 
   return (
-    <div ref={setNodeRef} style={style} className="flex flex-col gap-1">
+    <div ref={setNodeRef} style={style} className={cn("flex flex-col gap-1", isDragging && "pointer-events-none")}>
       {isOver && !isDragging && (
-        <div className="h-0.5 rounded-full bg-primary" />
+        <div className="flex items-center gap-0.5 py-0.5">
+          <div className="size-1.5 shrink-0 rounded-full bg-primary" />
+          <div className="h-0.5 flex-1 rounded-full bg-primary" />
+        </div>
       )}
-      <div className="group flex items-start gap-2">
+      <div className={cn("group flex items-start gap-2", isDragging && "rounded border border-dashed border-primary/30 bg-primary/5")}>
         <button
           type="button"
           {...attributes}
@@ -294,11 +297,14 @@ function SortableMilestoneWrapper({
           transform ? { ...transform, scaleX: 1, scaleY: 1 } : null,
         ),
         transition,
-        opacity: isDragging ? 0.4 : 1,
+        opacity: isDragging ? 0.3 : 1,
       }}
     >
       {isOver && !isDragging && (
-        <div className="mb-1 h-0.5 rounded-full bg-primary" />
+        <div className="mb-1 flex items-center gap-0.5">
+          <div className="size-1.5 shrink-0 rounded-full bg-primary" />
+          <div className="h-0.5 flex-1 rounded-full bg-primary" />
+        </div>
       )}
       {children({ attributes, listeners })}
     </div>

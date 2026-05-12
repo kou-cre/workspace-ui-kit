@@ -24,6 +24,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
@@ -47,6 +48,20 @@ import { ProjectListPane } from "@/components/workspace/ProjectListPane";
 import { ProjectDetailPane } from "@/components/workspace/ProjectDetailPane";
 import { NoteListPane } from "@/components/workspace/NoteListPane";
 import { NoteDetailPane } from "@/components/workspace/NoteDetailPane";
+
+// ドラッグ中のアイテム種別に応じて衝突対象を絞り込む。
+// closestCenter だけだとマイルストーン sortable が action drag の候補になり誤配置が起きる。
+const workspaceCollisionDetection: CollisionDetection = (args) => {
+  const activeType = (args.active.data.current as { type?: string } | undefined)?.type;
+  const droppableContainers = args.droppableContainers.filter((c) => {
+    const t = (c.data.current as { type?: string } | undefined)?.type;
+    if (activeType === "action") return t === "action" || t === "milestone-zone";
+    if (activeType === "milestone") return t === "milestone";
+    if (activeType === "note") return t === "milestone-zone";
+    return true;
+  });
+  return closestCenter({ ...args, droppableContainers });
+};
 
 type WorkspaceProps = {
   initialProjects: Project[];
@@ -585,7 +600,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
           {activeProject ? (
             <DndContext
               sensors={sensors}
-              collisionDetection={closestCenter}
+              collisionDetection={workspaceCollisionDetection}
               onDragStart={handleWorkspaceDragStart}
               onDragEnd={handleWorkspaceDragEnd}
             >
