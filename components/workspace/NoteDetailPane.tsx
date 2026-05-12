@@ -125,12 +125,12 @@ export function NoteDetailPane({
               />
             </InlineFieldRow>
 
-            <InlineFieldRow label="マイルストーン">
+            <InlineFieldRow label="グループ">
               <InlineSelectField
                 value={currentPhaseLabel}
                 options={phaseOptions}
                 onSave={handlePhaseSave}
-                ariaLabel="マイルストーン"
+                ariaLabel="グループ"
               />
             </InlineFieldRow>
           </dl>
