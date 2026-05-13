@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { type CalendarTodo } from "@/lib/schema";
@@ -40,6 +41,94 @@ function buildCalendarWeeks(year: number, month: number) {
 
 const isDone = (t: CalendarTodo) =>
   t.status === "解決済み" || (t.isAction && t.done);
+
+// ===== DroppableDayCell =====
+
+type DayCellProps = {
+  dateStr: string;
+  date: Date;
+  isCurrent: boolean;
+  dayTodos: CalendarTodo[];
+  isSelected: boolean;
+  isToday: boolean;
+  isWeekSelected: boolean;
+  dow: number;
+  onSelectDate: (date: string) => void;
+};
+
+function DroppableDayCell({
+  dateStr,
+  date,
+  isCurrent,
+  dayTodos,
+  isSelected,
+  isToday,
+  isWeekSelected,
+  dow,
+  onSelectDate,
+}: DayCellProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${dateStr}`,
+    data: { type: "calendar-day", date: dateStr },
+  });
+
+  const visibleTodos = dayTodos.slice(0, MAX_CHIPS);
+  const overflowCount = dayTodos.length - MAX_CHIPS;
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      onClick={() => onSelectDate(dateStr)}
+      className={cn(
+        "flex flex-col items-start gap-0.5 overflow-hidden rounded-md p-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        isSelected
+          ? "bg-primary text-primary-foreground"
+          : isOver
+          ? "bg-primary/20 ring-2 ring-inset ring-primary"
+          : isToday
+          ? "bg-muted font-semibold"
+          : isWeekSelected
+          ? "bg-primary/5 hover:bg-primary/10"
+          : "hover:bg-accent",
+        !isCurrent && "opacity-35",
+        dow === 5 && !isSelected && "text-primary",
+        dow === 6 && !isSelected && "text-destructive",
+      )}
+    >
+      <span className="w-full text-center tabular-nums leading-none">{date.getDate()}</span>
+      <div className="flex w-full flex-col gap-px">
+        {visibleTodos.map(t => (
+          <span
+            key={t.id}
+            className={cn(
+              "w-full truncate rounded px-0.5 text-[10px] leading-4",
+              isSelected
+                ? "bg-primary-foreground/20 text-primary-foreground"
+                : isDone(t)
+                ? "text-muted-foreground line-through"
+                : "bg-primary/15 text-primary",
+            )}
+          >
+            {t.text || "…"}
+          </span>
+        ))}
+        {overflowCount > 0 && (
+          <span
+            className={cn(
+              "px-0.5 text-[10px] leading-4",
+              isSelected ? "text-primary-foreground/70" : "text-muted-foreground",
+            )}
+          >
+            +{overflowCount}件
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ===== CalendarPane =====
 
 type CalendarScope = "day" | "week" | "month";
 
@@ -166,61 +255,19 @@ export function CalendarPane({
                 {/* 日セル */}
                 {week.map(({ date, isCurrent }, idx) => {
                   const dateStr = toDateStr(date);
-                  const dayTodos = todosPerDay[dateStr] ?? [];
-                  const isSelected = selectedScope === "day" && dateStr === selectedDate;
-                  const isToday = dateStr === today;
-                  const dow = (date.getDay() + 6) % 7;
-                  const visibleTodos = dayTodos.slice(0, MAX_CHIPS);
-                  const overflowCount = dayTodos.length - MAX_CHIPS;
-
                   return (
-                    <button
+                    <DroppableDayCell
                       key={idx}
-                      type="button"
-                      onClick={() => onSelectDate(dateStr)}
-                      className={cn(
-                        "flex flex-col items-start gap-0.5 overflow-hidden rounded-md p-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : isToday
-                          ? "bg-muted font-semibold"
-                          : isWeekSelected
-                          ? "bg-primary/5 hover:bg-primary/10"
-                          : "hover:bg-accent",
-                        !isCurrent && "opacity-35",
-                        dow === 5 && !isSelected && "text-primary",
-                        dow === 6 && !isSelected && "text-destructive",
-                      )}
-                    >
-                      <span className="w-full text-center tabular-nums leading-none">{date.getDate()}</span>
-                      <div className="flex w-full flex-col gap-px">
-                        {visibleTodos.map(t => (
-                          <span
-                            key={t.id}
-                            className={cn(
-                              "w-full truncate rounded px-0.5 text-[10px] leading-4",
-                              isSelected
-                                ? "bg-primary-foreground/20 text-primary-foreground"
-                                : isDone(t)
-                                ? "text-muted-foreground line-through"
-                                : "bg-primary/15 text-primary",
-                            )}
-                          >
-                            {t.text || "…"}
-                          </span>
-                        ))}
-                        {overflowCount > 0 && (
-                          <span
-                            className={cn(
-                              "px-0.5 text-[10px] leading-4",
-                              isSelected ? "text-primary-foreground/70" : "text-muted-foreground",
-                            )}
-                          >
-                            +{overflowCount}件
-                          </span>
-                        )}
-                      </div>
-                    </button>
+                      dateStr={dateStr}
+                      date={date}
+                      isCurrent={isCurrent}
+                      dayTodos={todosPerDay[dateStr] ?? []}
+                      isSelected={selectedScope === "day" && dateStr === selectedDate}
+                      isToday={dateStr === today}
+                      isWeekSelected={isWeekSelected}
+                      dow={(date.getDay() + 6) % 7}
+                      onSelectDate={onSelectDate}
+                    />
                   );
                 })}
               </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { useDraggable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -179,14 +180,34 @@ function TodoRow({
   onSelect: () => void;
 }) {
   const done = isDone(todo);
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `ctodo-${todo.id}`,
+    data: {
+      type: "calendar-todo",
+      noteId: todo.id,
+      projectId: todo.projectId,
+      label: todo.text || "未記入",
+    },
+  });
 
   return (
     <div
+      ref={setNodeRef}
       className={cn(
         "flex items-start gap-2 px-4 py-3 transition-colors",
         isSelected && "bg-accent",
+        isDragging && "opacity-40",
       )}
     >
+      <button
+        type="button"
+        {...listeners}
+        {...attributes}
+        className="mt-0.5 shrink-0 cursor-grab text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
+        aria-label="ドラッグして日付を変更"
+      >
+        <GripVertical className="size-3.5" />
+      </button>
       <Checkbox
         checked={done}
         onCheckedChange={onToggle}

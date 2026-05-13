@@ -310,6 +310,31 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     setPane4ManuallyClosed(false);
   }, []);
 
+  const rescheduleNote = useCallback((noteId: string, projectId: string, newDate: string) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p;
+      return { ...p, notes: p.notes.map(n => n.id === noteId ? { ...n, date: newDate } : n) };
+    }));
+  }, []);
+
+  const handleCalendarDragStart = useCallback((event: DragStartEvent) => {
+    const d = event.active.data.current as { type?: string; label?: string } | undefined;
+    if (d?.type === "calendar-todo") {
+      setActiveDrag({ id: String(event.active.id), type: "calendar-todo", label: d.label ?? "" });
+    }
+  }, []);
+
+  const handleCalendarDragEnd = useCallback((event: DragEndEvent) => {
+    setActiveDrag(null);
+    const { active, over } = event;
+    if (!over) return;
+    const drag = active.data.current as { type?: string; noteId?: string; projectId?: string } | undefined;
+    const drop = over.data.current as { type?: string; date?: string } | undefined;
+    if (drag?.type !== "calendar-todo" || drop?.type !== "calendar-day") return;
+    if (!drag.noteId || !drag.projectId || !drop.date) return;
+    rescheduleNote(drag.noteId, drag.projectId, drop.date);
+  }, [rescheduleNote]);
+
   const addWeekReview = useCallback(() => {
     const newNote: Note = {
       id: `wr-${Date.now()}`,
@@ -870,7 +895,12 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
 
         <div className="flex min-h-0 flex-1">
           {selectedView === "personal" ? (
-            <>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleCalendarDragStart}
+              onDragEnd={handleCalendarDragEnd}
+            >
               {/* Pane 2: 月カレンダー */}
               <CalendarPane
                 todos={calendarTodos}
@@ -948,7 +978,15 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                   onMoveToPhase={() => {}}
                 />
               )}
-            </>
+
+              <DragOverlay dropAnimation={null}>
+                {activeDrag?.type === "calendar-todo" && (
+                  <div className="max-w-48 truncate rounded-md bg-card px-3 py-2 text-xs shadow-lg ring-1 ring-border">
+                    {activeDrag.label}
+                  </div>
+                )}
+              </DragOverlay>
+            </DndContext>
           ) : activeProject ? (
             <DndContext
               sensors={sensors}
