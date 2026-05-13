@@ -9,6 +9,32 @@
     "notes": []
   },
   {
+    "id": "p0",
+    "name": "自社サービス開発",
+    "clients": [],
+    "status": "development",
+    "milestones": [
+      { "id": "planning", "label": "企画" },
+      { "id": "development", "label": "開発中" },
+      { "id": "release", "label": "リリース" }
+    ],
+    "noteFolders": [],
+    "notes": [
+      {
+        "id": "pa0-1",
+        "date": "2026-05-13",
+        "kind": "ToDo候補",
+        "status": "未解決",
+        "phase": "development",
+        "isAction": true,
+        "done": false,
+        "subtasks": [],
+        "text": "LP デザイン作成",
+        "priority": "high"
+      }
+    ]
+  },
+  {
     "id": "p1",
     "name": "請求書自動化ツール",
     "clients": ["株式会社ノフィ"],
