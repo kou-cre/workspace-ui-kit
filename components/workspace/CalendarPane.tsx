@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { type CalendarTodo } from "@/lib/schema";
 
-const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
+const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 const MAX_CHIPS = 2;
 const REVIEW_KINDS = new Set(["ブレインダンプ", "週次振り返り", "月次振り返り"]);
 
@@ -18,7 +18,7 @@ function toDateStr(d: Date): string {
 function buildCalendarWeeks(year: number, month: number) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  const firstDayOfWeek = (firstDay.getDay() + 6) % 7; // Mon=0
+  const firstDayOfWeek = firstDay.getDay(); // Sun=0
 
   const days: Array<{ date: Date; isCurrent: boolean }> = [];
   for (let i = 0; i < firstDayOfWeek; i++) {
@@ -92,8 +92,8 @@ function DroppableDayCell({
           ? "bg-primary/5 hover:bg-primary/10"
           : "hover:bg-accent",
         !isCurrent && "opacity-35",
-        dow === 5 && !isSelected && "text-primary",
-        dow === 6 && !isSelected && "text-destructive",
+        dow === 6 && !isSelected && "text-primary",
+        dow === 0 && !isSelected && "text-destructive",
       )}
     >
       <span className="w-full text-center tabular-nums leading-none">{date.getDate()}</span>
@@ -219,9 +219,9 @@ export function CalendarPane({
               key={label}
               className={cn(
                 "flex items-center justify-center py-1 text-xs font-medium",
-                i === 5 && "text-primary",
-                i === 6 && "text-destructive",
-                i !== 5 && i !== 6 && "text-muted-foreground",
+                i === 6 && "text-primary",
+                i === 0 && "text-destructive",
+                i !== 6 && i !== 0 && "text-muted-foreground",
               )}
             >
               {label}
@@ -265,7 +265,7 @@ export function CalendarPane({
                       isSelected={selectedScope === "day" && dateStr === selectedDate}
                       isToday={dateStr === today}
                       isWeekSelected={isWeekSelected}
-                      dow={(date.getDay() + 6) % 7}
+                      dow={date.getDay()}
                       onSelectDate={onSelectDate}
                     />
                   );
