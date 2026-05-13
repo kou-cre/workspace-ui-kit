@@ -253,6 +253,38 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     setPane4ManuallyClosed(false);
   }, []);
 
+  const addBrainDump = useCallback((date: string) => {
+    const newNote: Note = {
+      id: `bd-${Date.now()}`,
+      date,
+      kind: "ブレインダンプ",
+      status: "未解決",
+      phase: null,
+      priority: "normal",
+      isAction: false,
+      done: false,
+      subtasks: [],
+      text: "",
+    };
+    setProjects(prev => prev.map(p =>
+      p.id === PERSONAL_PROJECT_ID ? { ...p, notes: [...p.notes, newNote] } : p,
+    ));
+  }, []);
+
+  const updateBrainDump = useCallback((noteId: string, text: string) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id !== PERSONAL_PROJECT_ID) return p;
+      return { ...p, notes: p.notes.map(n => n.id === noteId ? { ...n, text } : n) };
+    }));
+  }, []);
+
+  const deleteBrainDump = useCallback((noteId: string) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id !== PERSONAL_PROJECT_ID) return p;
+      return { ...p, notes: p.notes.filter(n => n.id !== noteId) };
+    }));
+  }, []);
+
   const addProject = useCallback((name: string) => {
     const newProject: Project = {
       id: `p-${Date.now()}`,
@@ -765,6 +797,9 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 onSelectNote={selectCalendarNote}
                 onToggle={toggleCalendarTodo}
                 onAddPersonalTodo={addPersonalTodo}
+                onAddBrainDump={addBrainDump}
+                onUpdateBrainDump={updateBrainDump}
+                onDeleteBrainDump={deleteBrainDump}
               />
 
               {/* Pane 4: Todo 詳細（NoteDetailPane を流用） */}

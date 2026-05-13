@@ -66,6 +66,7 @@ const KIND_VARIANT: Record<Note["kind"], "default" | "secondary" | "outline"> = 
   アイデア: "secondary",
   議論余地: "outline",
   "ToDo候補": "default",
+  ブレインダンプ: "secondary",
 };
 
 // ===== Context Menu =====

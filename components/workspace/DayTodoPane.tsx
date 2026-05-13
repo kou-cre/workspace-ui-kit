@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { type CalendarTodo, PERSONAL_PROJECT_ID } from "@/lib/schema";
 
 const isDone = (t: CalendarTodo) =>
@@ -27,6 +28,9 @@ type Props = {
   onSelectNote: (noteId: string, projectId: string) => void;
   onToggle: (noteId: string, projectId: string) => void;
   onAddPersonalTodo: (text: string, date: string) => void;
+  onAddBrainDump: (date: string) => void;
+  onUpdateBrainDump: (id: string, text: string) => void;
+  onDeleteBrainDump: (id: string) => void;
 };
 
 export function DayTodoPane({
@@ -36,6 +40,9 @@ export function DayTodoPane({
   onSelectNote,
   onToggle,
   onAddPersonalTodo,
+  onAddBrainDump,
+  onUpdateBrainDump,
+  onDeleteBrainDump,
 }: Props) {
   const [newTodoText, setNewTodoText] = useState("");
 
@@ -46,24 +53,26 @@ export function DayTodoPane({
     setNewTodoText("");
   };
 
-  const pending = todos.filter(t => !isDone(t));
-  const done = todos.filter(isDone);
+  const brainDumps = todos.filter(t => t.kind === "ブレインダンプ");
+  const taskTodos = todos.filter(t => t.kind !== "ブレインダンプ");
+  const pending = taskTodos.filter(t => !isDone(t));
+  const done = taskTodos.filter(isDone);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col border-r border-border bg-canvas">
       {/* ヘッダー */}
       <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
         <p className="font-medium">{formatDateLabel(date)}</p>
-        {todos.length > 0 && (
+        {taskTodos.length > 0 && (
           <span className="text-xs tabular-nums text-muted-foreground">
-            {done.length}/{todos.length}
+            {taskTodos.filter(isDone).length}/{taskTodos.length}
           </span>
         )}
       </div>
 
       <ScrollArea className="flex-1">
         <div className="flex flex-col">
-          {/* 未完了 */}
+          {/* 未完了タスク */}
           {pending.map((todo, idx) => (
             <div key={todo.id}>
               <TodoRow
@@ -96,7 +105,7 @@ export function DayTodoPane({
             </Button>
           </div>
 
-          {/* 完了済み */}
+          {/* 完了済みタスク */}
           {done.length > 0 && (
             <>
               <Separator />
@@ -115,11 +124,43 @@ export function DayTodoPane({
             </>
           )}
 
-          {todos.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-12 text-center">
+          {taskTodos.length === 0 && (
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
               <p className="text-sm text-muted-foreground">この日のタスクはありません</p>
             </div>
           )}
+
+          {/* ブレインダンプセクション */}
+          <Separator />
+          <div className="flex flex-col gap-2 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground">ブレインダンプ</p>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => onAddBrainDump(date)}
+                aria-label="付箋を追加"
+                className="size-6 text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="size-3" />
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {brainDumps.map(dump => (
+                <BrainDumpCard
+                  key={dump.id}
+                  dump={dump}
+                  onUpdate={(text) => onUpdateBrainDump(dump.id, text)}
+                  onDelete={() => onDeleteBrainDump(dump.id)}
+                />
+              ))}
+              {brainDumps.length === 0 && (
+                <p className="text-xs text-muted-foreground/60">
+                  + で付箋を追加できます
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </ScrollArea>
     </div>
@@ -170,6 +211,43 @@ function TodoRow({
           </Badge>
         )}
       </button>
+    </div>
+  );
+}
+
+function BrainDumpCard({
+  dump,
+  onUpdate,
+  onDelete,
+}: {
+  dump: CalendarTodo;
+  onUpdate: (text: string) => void;
+  onDelete: () => void;
+}) {
+  const [text, setText] = useState(dump.text);
+
+  return (
+    <div className="group relative rounded-md bg-card p-2 ring-1 ring-border">
+      <Textarea
+        value={text}
+        onChange={e => setText(e.target.value)}
+        onBlur={() => { if (text !== dump.text) onUpdate(text); }}
+        onKeyDown={e => {
+          if (e.key === "Escape") { setText(dump.text); (e.target as HTMLTextAreaElement).blur(); }
+        }}
+        placeholder="書き出す..."
+        autoFocus={dump.text === ""}
+        className="min-h-[4rem] resize-none border-none bg-transparent p-0 text-xs leading-relaxed shadow-none focus-visible:ring-0"
+      />
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onDelete}
+        aria-label="削除"
+        className="absolute right-1 top-1 size-5 opacity-0 transition-opacity group-hover:opacity-100"
+      >
+        <Trash2 className="size-3" />
+      </Button>
     </div>
   );
 }

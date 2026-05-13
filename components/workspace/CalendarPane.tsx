@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { type CalendarTodo } from "@/lib/schema";
 
 const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
+const MAX_CHIPS = 2;
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -48,13 +49,12 @@ export function CalendarPane({ todos, selectedDate, onSelectDate }: Props) {
   const [viewYear, setViewYear] = useState(() => Number(selectedDate.split("-")[0]));
   const [viewMonth, setViewMonth] = useState(() => Number(selectedDate.split("-")[1]) - 1);
 
-  const todoCounts = useMemo(() => {
-    const map: Record<string, { total: number; done: number }> = {};
+  const todosPerDay = useMemo(() => {
+    const map: Record<string, CalendarTodo[]> = {};
     for (const t of todos) {
-      if (!t.date) continue;
-      if (!map[t.date]) map[t.date] = { total: 0, done: 0 };
-      map[t.date].total++;
-      if (isDone(t)) map[t.date].done++;
+      if (!t.date || t.kind === "ブレインダンプ") continue;
+      if (!map[t.date]) map[t.date] = [];
+      map[t.date].push(t);
     }
     return map;
   }, [todos]);
@@ -96,7 +96,7 @@ export function CalendarPane({ todos, selectedDate, onSelectDate }: Props) {
       </div>
 
       {/* カレンダーグリッド */}
-      <div className="flex min-h-0 flex-1 flex-col p-3 gap-1">
+      <div className="flex min-h-0 flex-1 flex-col gap-1 p-3">
         {/* 曜日ヘッダー */}
         <div className="grid grid-cols-7">
           {WEEKDAY_LABELS.map((label, i) => (
@@ -118,10 +118,12 @@ export function CalendarPane({ todos, selectedDate, onSelectDate }: Props) {
         <div className="grid flex-1 auto-rows-fr grid-cols-7 gap-px">
           {days.map(({ date, isCurrent }, idx) => {
             const dateStr = toDateStr(date);
-            const counts = todoCounts[dateStr];
+            const dayTodos = todosPerDay[dateStr] ?? [];
             const isSelected = dateStr === selectedDate;
             const isToday = dateStr === today;
             const dow = (date.getDay() + 6) % 7; // Mon=0, Sun=6
+            const visibleTodos = dayTodos.slice(0, MAX_CHIPS);
+            const overflowCount = dayTodos.length - MAX_CHIPS;
 
             return (
               <button
@@ -129,7 +131,7 @@ export function CalendarPane({ todos, selectedDate, onSelectDate }: Props) {
                 type="button"
                 onClick={() => onSelectDate(dateStr)}
                 className={cn(
-                  "flex flex-col items-center justify-start gap-0.5 rounded-md pt-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "flex flex-col items-start gap-0.5 overflow-hidden rounded-md p-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   isSelected
                     ? "bg-primary text-primary-foreground"
                     : isToday
@@ -140,19 +142,34 @@ export function CalendarPane({ todos, selectedDate, onSelectDate }: Props) {
                   dow === 6 && !isSelected && "text-destructive",
                 )}
               >
-                <span className="tabular-nums leading-none">{date.getDate()}</span>
-                {counts && counts.total > 0 && (
-                  <span
-                    className={cn(
-                      "h-1 w-4 rounded-full",
-                      isSelected
-                        ? "bg-primary-foreground/60"
-                        : counts.done === counts.total
-                        ? "bg-muted-foreground/30"
-                        : "bg-primary",
-                    )}
-                  />
-                )}
+                <span className="w-full text-center tabular-nums leading-none">{date.getDate()}</span>
+                <div className="flex w-full flex-col gap-px">
+                  {visibleTodos.map(t => (
+                    <span
+                      key={t.id}
+                      className={cn(
+                        "w-full truncate rounded px-0.5 text-[10px] leading-4",
+                        isSelected
+                          ? "bg-primary-foreground/20 text-primary-foreground"
+                          : isDone(t)
+                          ? "text-muted-foreground line-through"
+                          : "bg-primary/15 text-primary",
+                      )}
+                    >
+                      {t.text || "…"}
+                    </span>
+                  ))}
+                  {overflowCount > 0 && (
+                    <span
+                      className={cn(
+                        "px-0.5 text-[10px] leading-4",
+                        isSelected ? "text-primary-foreground/70" : "text-muted-foreground",
+                      )}
+                    >
+                      +{overflowCount}件
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
