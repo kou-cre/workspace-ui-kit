@@ -1,7 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarDays, ChevronRight, Plus } from "lucide-react";
+import { useState, useMemo } from "react";
+import { CalendarDays, ChevronRight, GripVertical, Plus } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import { type Project, PERSONAL_PROJECT_ID } from "@/lib/schema";
 import { getMilestoneBadgeVariant } from "@/lib/labels";
@@ -37,19 +52,120 @@ type ProjectListPaneProps = {
   onAddProject: (name: string) => void;
 };
 
-/** クライアントごとにプロジェクトをグルーピングして返す。
- *  共有案件（複数クライアント）は各クライアント配下に重複して表示される。 */
-function groupByClient(projects: Project[]): [string, Project[]][] {
+function buildClientMap(projects: Project[]): Map<string, Project[]> {
   const map = new Map<string, Project[]>();
-  for (const project of projects) {
-    const keys = project.clients.length > 0 ? project.clients : ["未設定"];
-    for (const key of keys) {
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(project);
+  for (const p of projects) {
+    for (const c of p.clients) {
+      if (!map.has(c)) map.set(c, []);
+      map.get(c)!.push(p);
     }
   }
-  return Array.from(map.entries());
+  return map;
 }
+
+// ===== SortableClientGroup =====
+
+function SortableClientGroup({
+  clientName,
+  clientProjects,
+  isOpen,
+  onToggle,
+  selectedProjectId,
+  onSelectProject,
+}: {
+  clientName: string;
+  clientProjects: Project[];
+  isOpen: boolean;
+  onToggle: () => void;
+  selectedProjectId: string;
+  onSelectProject: (id: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: clientName });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(isDragging && "relative z-50 opacity-50")}
+    >
+      <Collapsible open={isOpen} onOpenChange={onToggle}>
+        <div className="group/row flex items-center gap-0.5">
+          {/* ドラッグハンドル */}
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="shrink-0 cursor-grab rounded p-0.5 text-muted-foreground/30 opacity-0 hover:text-muted-foreground active:cursor-grabbing group-hover/row:opacity-100"
+            aria-label="ドラッグして並び替え"
+          >
+            <GripVertical className="size-3" />
+          </button>
+
+          <CollapsibleTrigger className="flex flex-1 items-center gap-1.5 rounded-md py-1.5 pr-2 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
+            <ChevronRight
+              className={cn(
+                "size-3.5 shrink-0 transition-transform duration-150",
+                isOpen && "rotate-90",
+              )}
+            />
+            <span className="truncate">{clientName}</span>
+            <span className="ml-auto shrink-0 tabular-nums opacity-60">
+              {clientProjects.length}
+            </span>
+          </CollapsibleTrigger>
+        </div>
+
+        <CollapsibleContent>
+          <SidebarMenu className="pl-3">
+            {clientProjects.map((project) => {
+              const currentMilestone = project.milestones.find(
+                (m) => m.id === project.status,
+              );
+              return (
+                <SidebarMenuItem key={`${clientName}-${project.id}`}>
+                  <SidebarMenuButton
+                    isActive={project.id === selectedProjectId}
+                    onClick={() => onSelectProject(project.id)}
+                    tooltip={project.name}
+                    className="h-auto py-1.5"
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className="truncate text-sm font-medium leading-tight">
+                        {project.name}
+                      </span>
+                      {project.clients.length > 1 && (
+                        <Badge variant="secondary" size="xs" className="shrink-0">
+                          共有
+                        </Badge>
+                      )}
+                    </div>
+                    {currentMilestone && (
+                      <Badge
+                        variant={getMilestoneBadgeVariant(project.status)}
+                        size="xs"
+                        className="ml-auto shrink-0"
+                      >
+                        {currentMilestone.label}
+                      </Badge>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+// ===== ProjectListPane =====
 
 export function ProjectListPane({
   workspaceName,
@@ -62,11 +178,23 @@ export function ProjectListPane({
 }: ProjectListPaneProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [closedClients, setClosedClients] = useState<Set<string>>(new Set());
+  const [projectListOpen, setProjectListOpen] = useState(true);
+  const [clientOrder, setClientOrder] = useState<string[]>([]);
 
   const projectList = projects.filter(p => p.id !== PERSONAL_PROJECT_ID);
-  const clientGroups = groupByClient(projectList);
+  const myProjects = projectList.filter(p => p.clients.length === 0);
+  const clientedProjects = projectList.filter(p => p.clients.length > 0);
 
-  const isOpen = (clientName: string) => !closedClients.has(clientName);
+  const clientGroupMap = useMemo(() => buildClientMap(clientedProjects), [clientedProjects]);
+  const allClientNames = useMemo(() => Array.from(clientGroupMap.keys()), [clientGroupMap]);
+
+  // clientOrder にない新クライアントは末尾に追加
+  const orderedClients = useMemo(() => {
+    const inOrder = clientOrder.filter(c => clientGroupMap.has(c));
+    const newClients = allClientNames.filter(c => !clientOrder.includes(c));
+    return [...inOrder, ...newClients];
+  }, [clientOrder, clientGroupMap, allClientNames]);
+
   const toggleClient = (clientName: string) => {
     setClosedClients((prev) => {
       const next = new Set(prev);
@@ -74,6 +202,20 @@ export function ProjectListPane({
       else next.add(clientName);
       return next;
     });
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = orderedClients.indexOf(active.id as string);
+    const newIdx = orderedClients.indexOf(over.id as string);
+    if (oldIdx !== -1 && newIdx !== -1) {
+      setClientOrder(arrayMove(orderedClients, oldIdx, newIdx));
+    }
   };
 
   return (
@@ -90,7 +232,7 @@ export function ProjectListPane({
         </SidebarHeader>
 
         <SidebarContent>
-          {/* マイタスク（個人ダッシュボード）エントリ */}
+          {/* マイタスク */}
           <SidebarGroup className="pb-0">
             <SidebarGroupContent>
               <SidebarMenu>
@@ -114,10 +256,23 @@ export function ProjectListPane({
           </div>
 
           <SidebarGroup>
+            {/* プロジェクト一覧ヘッダー（展開時のみ表示） */}
             <div className="flex items-center justify-between px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-              <span className="px-2 py-1 text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
-                プロジェクト一覧
-              </span>
+              <Collapsible
+                open={projectListOpen}
+                onOpenChange={setProjectListOpen}
+                className="group-data-[collapsible=icon]:hidden"
+              >
+                <CollapsibleTrigger className="flex items-center gap-1 px-1 py-1 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:text-sidebar-foreground">
+                  <ChevronRight
+                    className={cn(
+                      "size-3 shrink-0 transition-transform duration-150",
+                      projectListOpen && "rotate-90",
+                    )}
+                  />
+                  プロジェクト一覧
+                </CollapsibleTrigger>
+              </Collapsible>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -147,70 +302,74 @@ export function ProjectListPane({
                 ))}
               </SidebarMenu>
 
-              {/* 展開時: クライアント別 Collapsible グループ */}
-              <div className="flex flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
-                {clientGroups.map(([clientName, clientProjects]) => (
-                  <Collapsible
-                    key={clientName}
-                    open={isOpen(clientName)}
-                    onOpenChange={() => toggleClient(clientName)}
+              {/* 展開時: プロジェクト一覧コンテンツ */}
+              {projectListOpen && (
+                <div className="flex flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
+                  {/* My Project: クライアントなしプロジェクト */}
+                  {myProjects.length > 0 && (
+                    <SidebarMenu>
+                      {myProjects.map((project) => {
+                        const currentMilestone = project.milestones.find(
+                          (m) => m.id === project.status,
+                        );
+                        return (
+                          <SidebarMenuItem key={project.id}>
+                            <SidebarMenuButton
+                              isActive={project.id === selectedProjectId}
+                              onClick={() => onSelectProject(project.id)}
+                              tooltip={project.name}
+                              className="h-auto py-1.5"
+                            >
+                              <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                                <span className="truncate text-sm font-medium leading-tight">
+                                  {project.name}
+                                </span>
+                              </div>
+                              {currentMilestone && (
+                                <Badge
+                                  variant={getMilestoneBadgeVariant(project.status)}
+                                  size="xs"
+                                  className="ml-auto shrink-0"
+                                >
+                                  {currentMilestone.label}
+                                </Badge>
+                              )}
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </SidebarMenu>
+                  )}
+
+                  {/* My Project とクライアントグループの間の区切り */}
+                  {myProjects.length > 0 && orderedClients.length > 0 && (
+                    <div className="mx-2 my-0.5">
+                      <Separator />
+                    </div>
+                  )}
+
+                  {/* クライアントグループ（DnD並び替え） */}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
                   >
-                    <CollapsibleTrigger className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
-                      <ChevronRight
-                        className={cn(
-                          "size-3.5 shrink-0 transition-transform duration-150",
-                          isOpen(clientName) && "rotate-90",
-                        )}
-                      />
-                      <span className="truncate">{clientName}</span>
-                      <span className="ml-auto shrink-0 tabular-nums opacity-60">
-                        {clientProjects.length}
-                      </span>
-                    </CollapsibleTrigger>
-
-                    <CollapsibleContent>
-                      <SidebarMenu className="pl-3">
-                        {clientProjects.map((project) => {
-                          const currentMilestone = project.milestones.find(
-                            (m) => m.id === project.status,
-                          );
-                          return (
-                            <SidebarMenuItem key={`${clientName}-${project.id}`}>
-                              <SidebarMenuButton
-                                isActive={project.id === selectedProjectId}
-                                onClick={() => onSelectProject(project.id)}
-                                tooltip={project.name}
-                                className="h-auto py-1.5"
-                              >
-                                <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                  <span className="truncate text-sm font-medium leading-tight">
-                                    {project.name}
-                                  </span>
-                                  {project.clients.length > 1 && (
-                                    <Badge variant="secondary" size="xs" className="shrink-0">
-                                      共有
-                                    </Badge>
-                                  )}
-                                </div>
-
-                                {currentMilestone && (
-                                  <Badge
-                                    variant={getMilestoneBadgeVariant(project.status)}
-                                    size="xs"
-                                    className="ml-auto shrink-0"
-                                  >
-                                    {currentMilestone.label}
-                                  </Badge>
-                                )}
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </SidebarMenu>
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
-              </div>
+                    <SortableContext items={orderedClients} strategy={verticalListSortingStrategy}>
+                      {orderedClients.map((clientName) => (
+                        <SortableClientGroup
+                          key={clientName}
+                          clientName={clientName}
+                          clientProjects={clientGroupMap.get(clientName) ?? []}
+                          isOpen={!closedClients.has(clientName)}
+                          onToggle={() => toggleClient(clientName)}
+                          selectedProjectId={selectedProjectId}
+                          onSelectProject={onSelectProject}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+              )}
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
