@@ -307,9 +307,9 @@ export function ProjectListPane({
               {projectListOpen && (
                 <div className="flex flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
                   {/* My Project: クライアントなしプロジェクト */}
-                  {myProjects.length > 0 && (
-                    <Collapsible open={myProjectOpen} onOpenChange={setMyProjectOpen}>
-                      <CollapsibleTrigger className="flex w-full items-center gap-1.5 rounded-md py-1.5 px-2 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
+                  <Collapsible open={myProjectOpen} onOpenChange={setMyProjectOpen}>
+                    <div className="flex items-center">
+                      <CollapsibleTrigger className="flex flex-1 items-center gap-1.5 rounded-md py-1.5 pl-2 pr-1 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
                         <ChevronRight
                           className={cn(
                             "size-3.5 shrink-0 transition-transform duration-150",
@@ -321,7 +321,22 @@ export function ProjectListPane({
                           {myProjects.length}
                         </span>
                       </CollapsibleTrigger>
-                      <CollapsibleContent>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setAddDialogOpen(true)}
+                        aria-label="My Projectにプロジェクトを追加"
+                        className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+                      >
+                        <Plus className="size-3" />
+                      </Button>
+                    </div>
+                    <CollapsibleContent>
+                      {myProjects.length === 0 ? (
+                        <p className="px-5 py-1.5 text-xs text-muted-foreground/60">
+                          + でプロジェクトを追加
+                        </p>
+                      ) : (
                         <SidebarMenu className="pl-3">
                           {myProjects.map((project) => {
                             const currentMilestone = project.milestones.find(
@@ -354,12 +369,12 @@ export function ProjectListPane({
                             );
                           })}
                         </SidebarMenu>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  )}
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
 
                   {/* My Project とクライアントグループの間の区切り */}
-                  {myProjects.length > 0 && orderedClients.length > 0 && (
+                  {orderedClients.length > 0 && (
                     <div className="mx-2 my-0.5">
                       <Separator />
                     </div>
