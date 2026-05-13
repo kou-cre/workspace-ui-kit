@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,7 @@ export function AddItemDialog({
   onAdd,
 }: AddItemDialogProps) {
   const [name, setName] = useState("");
+  const composingRef = useRef(false);
 
   const handleSubmit = () => {
     const trimmed = name.trim();
@@ -67,8 +68,10 @@ export function AddItemDialog({
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onCompositionStart={() => { composingRef.current = true; }}
+              onCompositionEnd={() => { composingRef.current = false; }}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.nativeEvent.isComposing) handleSubmit();
+                if (e.key === "Enter" && !composingRef.current) handleSubmit();
               }}
               placeholder={placeholder}
             />

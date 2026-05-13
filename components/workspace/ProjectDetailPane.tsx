@@ -516,6 +516,7 @@ export function ProjectDetailPane({
           <InlineTextField
             value={project.name}
             onSave={onRenameProject}
+            ariaLabel="プロジェクト名"
             className="font-semibold"
           />
         </div>

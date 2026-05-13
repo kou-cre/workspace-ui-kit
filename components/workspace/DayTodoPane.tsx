@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,7 @@ export function DayTodoPane({
   onDeleteBrainDump,
 }: Props) {
   const [newTodoText, setNewTodoText] = useState("");
+  const composingRef = useRef(false);
 
   const handleAdd = () => {
     const trimmed = newTodoText.trim();
@@ -91,7 +92,9 @@ export function DayTodoPane({
             <Input
               value={newTodoText}
               onChange={e => setNewTodoText(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && !e.nativeEvent.isComposing) handleAdd(); }}
+              onCompositionStart={() => { composingRef.current = true; }}
+              onCompositionEnd={() => { composingRef.current = false; }}
+              onKeyDown={e => { if (e.key === "Enter" && !composingRef.current) handleAdd(); }}
               placeholder="個人タスクを追加..."
               className="h-7 flex-1 bg-card text-xs"
             />
