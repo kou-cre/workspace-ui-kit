@@ -7,7 +7,7 @@ import { z } from "zod";
 
 // ===== メモ種別・ステータス・優先度 =====
 
-export const noteKindSchema = z.enum(["アイデア", "議論余地", "ToDo候補", "ブレインダンプ"]);
+export const noteKindSchema = z.enum(["アイデア", "議論余地", "ToDo候補", "ブレインダンプ", "週次振り返り", "月次振り返り"]);
 export type NoteKind = z.infer<typeof noteKindSchema>;
 
 export const noteStatusSchema = z.enum(["未解決", "対応中", "解決済み"]);

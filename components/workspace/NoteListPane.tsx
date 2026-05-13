@@ -67,6 +67,8 @@ const KIND_VARIANT: Record<Note["kind"], "default" | "secondary" | "outline"> = 
   議論余地: "outline",
   "ToDo候補": "default",
   ブレインダンプ: "secondary",
+  週次振り返り: "secondary",
+  月次振り返り: "secondary",
 };
 
 // ===== Context Menu =====

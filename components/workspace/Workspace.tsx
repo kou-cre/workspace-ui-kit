@@ -50,7 +50,10 @@ import { NoteListPane } from "@/components/workspace/NoteListPane";
 import { NoteDetailPane } from "@/components/workspace/NoteDetailPane";
 import { CalendarPane } from "@/components/workspace/CalendarPane";
 import { DayTodoPane } from "@/components/workspace/DayTodoPane";
+import { ReviewPane } from "@/components/workspace/ReviewPane";
 import { type CalendarTodo, PERSONAL_PROJECT_ID } from "@/lib/schema";
+
+type CalendarScope = "day" | "week" | "month";
 
 const todayLocalDate = () => {
   const d = new Date();
@@ -129,6 +132,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   // 個人ダッシュボード
   const [selectedView, setSelectedView] = useState<"personal" | null>(null);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(todayLocalDate);
+  const [selectedCalendarScope, setSelectedCalendarScope] = useState<CalendarScope>("day");
   const [selectedNoteProjectId, setSelectedNoteProjectId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -170,6 +174,44 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     [calendarTodos, selectedCalendarDate],
   );
 
+  const REVIEW_KINDS = ["ブレインダンプ", "週次振り返り", "月次振り返り"];
+
+  const weekPeriodTodos = useMemo(() => {
+    if (selectedCalendarScope !== "week") return [];
+    const [y, m, d] = selectedCalendarDate.split("-").map(Number);
+    const end = new Date(y, m - 1, d + 6);
+    const weekEnd = `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,"0")}-${String(end.getDate()).padStart(2,"0")}`;
+    return calendarTodos.filter(t =>
+      t.date && t.date >= selectedCalendarDate && t.date <= weekEnd &&
+      !REVIEW_KINDS.includes(t.kind)
+    );
+  }, [selectedCalendarScope, selectedCalendarDate, calendarTodos]);
+
+  const weekReviewNotes = useMemo<CalendarTodo[]>(() => {
+    if (selectedCalendarScope !== "week") return [];
+    const personal = projects.find(p => p.id === PERSONAL_PROJECT_ID);
+    return (personal?.notes ?? [])
+      .filter(n => n.kind === "週次振り返り" && n.date === selectedCalendarDate)
+      .map(n => ({ ...n, projectId: PERSONAL_PROJECT_ID, projectName: "マイタスク" }));
+  }, [selectedCalendarScope, selectedCalendarDate, projects]);
+
+  const monthPeriodTodos = useMemo(() => {
+    if (selectedCalendarScope !== "month") return [];
+    const monthKey = selectedCalendarDate.slice(0, 7);
+    return calendarTodos.filter(t =>
+      t.date?.startsWith(monthKey) && !REVIEW_KINDS.includes(t.kind)
+    );
+  }, [selectedCalendarScope, selectedCalendarDate, calendarTodos]);
+
+  const monthReviewNotes = useMemo<CalendarTodo[]>(() => {
+    if (selectedCalendarScope !== "month") return [];
+    const monthKey = selectedCalendarDate.slice(0, 7);
+    const personal = projects.find(p => p.id === PERSONAL_PROJECT_ID);
+    return (personal?.notes ?? [])
+      .filter(n => n.kind === "月次振り返り" && n.date?.startsWith(monthKey))
+      .map(n => ({ ...n, projectId: PERSONAL_PROJECT_ID, projectName: "マイタスク" }));
+  }, [selectedCalendarScope, selectedCalendarDate, projects]);
+
   const personalActiveNote = useMemo(() => {
     if (!selectedNoteId || !selectedNoteProjectId) return null;
     return projects.find(p => p.id === selectedNoteProjectId)?.notes.find(n => n.id === selectedNoteId) ?? null;
@@ -208,11 +250,26 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
 
   const selectPersonalDashboard = useCallback(() => {
     setSelectedView("personal");
+    setSelectedCalendarScope("day");
     setSelectedNoteId(null);
     setSelectedNoteProjectId(null);
     setSelectedMilestoneId(null);
     setSelectedFolderId(null);
     setPane4ManuallyClosed(false);
+  }, []);
+
+  const selectCalendarWeek = useCallback((weekStart: string) => {
+    setSelectedCalendarDate(weekStart);
+    setSelectedCalendarScope("week");
+    setSelectedNoteId(null);
+    setSelectedNoteProjectId(null);
+  }, []);
+
+  const selectCalendarMonth = useCallback((monthKey: string) => {
+    setSelectedCalendarDate(`${monthKey}-01`);
+    setSelectedCalendarScope("month");
+    setSelectedNoteId(null);
+    setSelectedNoteProjectId(null);
   }, []);
 
   const toggleCalendarTodo = useCallback((noteId: string, projectId: string) => {
@@ -252,6 +309,42 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     setSelectedNoteProjectId(projectId);
     setPane4ManuallyClosed(false);
   }, []);
+
+  const addWeekReview = useCallback(() => {
+    const newNote: Note = {
+      id: `wr-${Date.now()}`,
+      date: selectedCalendarDate,
+      kind: "週次振り返り",
+      status: "未解決",
+      phase: null,
+      priority: "normal",
+      isAction: false,
+      done: false,
+      subtasks: [],
+      text: "",
+    };
+    setProjects(prev => prev.map(p =>
+      p.id === PERSONAL_PROJECT_ID ? { ...p, notes: [...p.notes, newNote] } : p,
+    ));
+  }, [selectedCalendarDate]);
+
+  const addMonthReview = useCallback(() => {
+    const newNote: Note = {
+      id: `mr-${Date.now()}`,
+      date: selectedCalendarDate,
+      kind: "月次振り返り",
+      status: "未解決",
+      phase: null,
+      priority: "normal",
+      isAction: false,
+      done: false,
+      subtasks: [],
+      text: "",
+    };
+    setProjects(prev => prev.map(p =>
+      p.id === PERSONAL_PROJECT_ID ? { ...p, notes: [...p.notes, newNote] } : p,
+    ));
+  }, [selectedCalendarDate]);
 
   const addBrainDump = useCallback((date: string) => {
     const newNote: Note = {
@@ -782,25 +875,51 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
               <CalendarPane
                 todos={calendarTodos}
                 selectedDate={selectedCalendarDate}
+                selectedScope={selectedCalendarScope}
                 onSelectDate={(date) => {
                   setSelectedCalendarDate(date);
+                  setSelectedCalendarScope("day");
                   setSelectedNoteId(null);
                   setSelectedNoteProjectId(null);
                 }}
+                onSelectWeek={selectCalendarWeek}
+                onSelectMonth={selectCalendarMonth}
               />
 
-              {/* Pane 3: 選択日の Todo リスト */}
-              <DayTodoPane
-                date={selectedCalendarDate}
-                todos={dayTodos}
-                selectedNoteId={selectedNoteId}
-                onSelectNote={selectCalendarNote}
-                onToggle={toggleCalendarTodo}
-                onAddPersonalTodo={addPersonalTodo}
-                onAddBrainDump={addBrainDump}
-                onUpdateBrainDump={updateBrainDump}
-                onDeleteBrainDump={deleteBrainDump}
-              />
+              {/* Pane 3: 日別Todo / 週次振り返り / 月次振り返り */}
+              {selectedCalendarScope === "week" ? (
+                <ReviewPane
+                  scope="week"
+                  scopeDate={selectedCalendarDate}
+                  periodTodos={weekPeriodTodos}
+                  reviewNotes={weekReviewNotes}
+                  onAddReview={addWeekReview}
+                  onUpdateReview={updateBrainDump}
+                  onDeleteReview={deleteBrainDump}
+                />
+              ) : selectedCalendarScope === "month" ? (
+                <ReviewPane
+                  scope="month"
+                  scopeDate={selectedCalendarDate}
+                  periodTodos={monthPeriodTodos}
+                  reviewNotes={monthReviewNotes}
+                  onAddReview={addMonthReview}
+                  onUpdateReview={updateBrainDump}
+                  onDeleteReview={deleteBrainDump}
+                />
+              ) : (
+                <DayTodoPane
+                  date={selectedCalendarDate}
+                  todos={dayTodos}
+                  selectedNoteId={selectedNoteId}
+                  onSelectNote={selectCalendarNote}
+                  onToggle={toggleCalendarTodo}
+                  onAddPersonalTodo={addPersonalTodo}
+                  onAddBrainDump={addBrainDump}
+                  onUpdateBrainDump={updateBrainDump}
+                  onDeleteBrainDump={deleteBrainDump}
+                />
+              )}
 
               {/* Pane 4: Todo 詳細（NoteDetailPane を流用） */}
               {personalPane4Open && personalActiveNote && personalActiveProject && (
