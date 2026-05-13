@@ -179,6 +179,7 @@ export function ProjectListPane({
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [closedClients, setClosedClients] = useState<Set<string>>(new Set());
   const [projectListOpen, setProjectListOpen] = useState(true);
+  const [myProjectOpen, setMyProjectOpen] = useState(true);
   const [clientOrder, setClientOrder] = useState<string[]>([]);
 
   const projectList = projects.filter(p => p.id !== PERSONAL_PROJECT_ID);
@@ -307,38 +308,54 @@ export function ProjectListPane({
                 <div className="flex flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
                   {/* My Project: クライアントなしプロジェクト */}
                   {myProjects.length > 0 && (
-                    <SidebarMenu>
-                      {myProjects.map((project) => {
-                        const currentMilestone = project.milestones.find(
-                          (m) => m.id === project.status,
-                        );
-                        return (
-                          <SidebarMenuItem key={project.id}>
-                            <SidebarMenuButton
-                              isActive={project.id === selectedProjectId}
-                              onClick={() => onSelectProject(project.id)}
-                              tooltip={project.name}
-                              className="h-auto py-1.5"
-                            >
-                              <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                <span className="truncate text-sm font-medium leading-tight">
-                                  {project.name}
-                                </span>
-                              </div>
-                              {currentMilestone && (
-                                <Badge
-                                  variant={getMilestoneBadgeVariant(project.status)}
-                                  size="xs"
-                                  className="ml-auto shrink-0"
+                    <Collapsible open={myProjectOpen} onOpenChange={setMyProjectOpen}>
+                      <CollapsibleTrigger className="flex w-full items-center gap-1.5 rounded-md py-1.5 px-2 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
+                        <ChevronRight
+                          className={cn(
+                            "size-3.5 shrink-0 transition-transform duration-150",
+                            myProjectOpen && "rotate-90",
+                          )}
+                        />
+                        <span className="truncate">My Project</span>
+                        <span className="ml-auto shrink-0 tabular-nums opacity-60">
+                          {myProjects.length}
+                        </span>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenu className="pl-3">
+                          {myProjects.map((project) => {
+                            const currentMilestone = project.milestones.find(
+                              (m) => m.id === project.status,
+                            );
+                            return (
+                              <SidebarMenuItem key={project.id}>
+                                <SidebarMenuButton
+                                  isActive={project.id === selectedProjectId}
+                                  onClick={() => onSelectProject(project.id)}
+                                  tooltip={project.name}
+                                  className="h-auto py-1.5"
                                 >
-                                  {currentMilestone.label}
-                                </Badge>
-                              )}
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
+                                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                                    <span className="truncate text-sm font-medium leading-tight">
+                                      {project.name}
+                                    </span>
+                                  </div>
+                                  {currentMilestone && (
+                                    <Badge
+                                      variant={getMilestoneBadgeVariant(project.status)}
+                                      size="xs"
+                                      className="ml-auto shrink-0"
+                                    >
+                                      {currentMilestone.label}
+                                    </Badge>
+                                  )}
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </CollapsibleContent>
+                    </Collapsible>
                   )}
 
                   {/* My Project とクライアントグループの間の区切り */}
