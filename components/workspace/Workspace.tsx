@@ -421,6 +421,16 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     setPane4ManuallyClosed(false);
   }, []);
 
+  const renameProject = useCallback(
+    (name: string) => {
+      if (!name.trim()) return;
+      setProjects((prev) =>
+        prev.map((p) => (p.id === selectedProjectId ? { ...p, name: name.trim() } : p)),
+      );
+    },
+    [selectedProjectId],
+  );
+
   const updateProjectStatus = useCallback(
     (status: StatusKey) => {
       setProjects((prev) =>
@@ -1001,6 +1011,7 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
                 allClientOptions={allClientOptions}
                 selectedMilestoneId={selectedMilestoneId}
                 onSelectMilestone={selectMilestone}
+                onRenameProject={renameProject}
                 onUpdateProjectStatus={updateProjectStatus}
                 onUpdateClients={updateClients}
                 onAddMilestone={addMilestone}

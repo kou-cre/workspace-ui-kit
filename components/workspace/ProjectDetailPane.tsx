@@ -30,6 +30,7 @@ import {
   type ComboOption,
 } from "@/components/primitives/InlineComboboxField";
 import { InlineSelectField } from "@/components/primitives/InlineSelectField";
+import { InlineTextField } from "@/components/primitives/InlineTextField";
 
 // ===== MilestoneDropZone =====
 
@@ -350,6 +351,7 @@ type ProjectDetailPaneProps = {
   allClientOptions: ComboOption[];
   selectedMilestoneId: string | null;
   onSelectMilestone: (id: string) => void;
+  onRenameProject: (name: string) => void;
   onUpdateProjectStatus: (status: StatusKey) => void;
   onUpdateClients: (clients: string[]) => void;
   onAddMilestone: (id: string, label: string) => void;
@@ -369,6 +371,7 @@ export function ProjectDetailPane({
   allClientOptions,
   selectedMilestoneId,
   onSelectMilestone,
+  onRenameProject,
   onUpdateProjectStatus,
   onUpdateClients,
   onAddMilestone,
@@ -510,7 +513,11 @@ export function ProjectDetailPane({
       <div className="flex flex-col gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-0 flex-col gap-1.5">
           <p className="text-xs text-muted-foreground">プロジェクト名</p>
-          <p className="truncate font-semibold">{project.name}</p>
+          <InlineTextField
+            value={project.name}
+            onSave={onRenameProject}
+            className="font-semibold"
+          />
         </div>
 
         <div className="flex flex-col gap-1.5 text-sm">
