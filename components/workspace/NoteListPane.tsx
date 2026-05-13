@@ -306,7 +306,7 @@ function NoteRow({
             onChange={(e) => onEditChange(e.target.value)}
             onBlur={onCommitEdit}
             onKeyDown={(e) => {
-              if (e.key === "Enter") { e.preventDefault(); onCommitEdit(); }
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); onCommitEdit(); }
               if (e.key === "Escape") onCancelEdit();
             }}
             placeholder="メモの内容を入力..."
@@ -553,7 +553,7 @@ export function NoteListPane({
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) {
                 const t = newFolderName.trim();
                 if (t) { onAddNoteFolder(t); setNewFolderName(""); setAddingFolder(false); }
               }

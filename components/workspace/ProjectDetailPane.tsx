@@ -168,7 +168,7 @@ function SortableActionRow({
             onChange={(e) => onEditChange(e.target.value)}
             onBlur={onCommitEdit}
             onKeyDown={(e) => {
-              if (e.key === "Enter") onCommitEdit();
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) onCommitEdit();
               if (e.key === "Escape") onCancelEdit();
             }}
             className="h-6 flex-1 bg-card py-0 text-sm"
@@ -268,7 +268,7 @@ function SortableActionRow({
             value={subtaskInputs[action.id]}
             onChange={(e) => onSubtaskInputChange(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) {
                 const t = subtaskInputs[action.id].trim();
                 if (t) onAddSubtask(t);
               }
@@ -711,7 +711,7 @@ export function ProjectDetailPane({
                           onBlur={() => commitMilestoneEdit(milestone.id)}
                           onKeyDown={(e) => {
                             e.stopPropagation();
-                            if (e.key === "Enter") { e.preventDefault(); commitMilestoneEdit(milestone.id); }
+                            if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); commitMilestoneEdit(milestone.id); }
                             if (e.key === "Escape") cancelMilestoneEdit();
                           }}
                           onClick={(e) => e.stopPropagation()}
@@ -849,7 +849,7 @@ export function ProjectDetailPane({
                               }))
                             }
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") handleAddAction(milestone.id);
+                              if (e.key === "Enter" && !e.nativeEvent.isComposing) handleAddAction(milestone.id);
                             }}
                             placeholder="アクションを追加..."
                             className="h-7 flex-1 bg-card text-xs"
@@ -883,7 +883,7 @@ export function ProjectDetailPane({
                 value={newMilestoneName}
                 onChange={(e) => setNewMilestoneName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddMilestone();
+                  if (e.key === "Enter" && !e.nativeEvent.isComposing) handleAddMilestone();
                   if (e.key === "Escape") {
                     setShowAddMilestone(false);
                     setNewMilestoneName("");

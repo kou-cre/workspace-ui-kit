@@ -49,7 +49,7 @@ export function InlineTextField({
         if (e.target.value !== value) onSave(e.target.value);
       }}
       onKeyDown={(e) => {
-        if (e.key === "Enter") {
+        if (e.key === "Enter" && !e.nativeEvent.isComposing) {
           (e.target as HTMLInputElement).blur();
         } else if (e.key === "Escape") {
           (e.target as HTMLInputElement).value = value;

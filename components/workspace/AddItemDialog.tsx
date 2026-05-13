@@ -68,7 +68,7 @@ export function AddItemDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
+                if (e.key === "Enter" && !e.nativeEvent.isComposing) handleSubmit();
               }}
               placeholder={placeholder}
             />

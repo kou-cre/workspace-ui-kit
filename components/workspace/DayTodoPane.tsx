@@ -91,7 +91,7 @@ export function DayTodoPane({
             <Input
               value={newTodoText}
               onChange={e => setNewTodoText(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleAdd(); }}
+              onKeyDown={e => { if (e.key === "Enter" && !e.nativeEvent.isComposing) handleAdd(); }}
               placeholder="個人タスクを追加..."
               className="h-7 flex-1 bg-card text-xs"
             />
