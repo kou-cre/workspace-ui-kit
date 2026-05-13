@@ -102,3 +102,9 @@ export const workspaceSchema = z.object({
 });
 
 export const projectsSchema = z.array(projectSchema);
+
+/** 個人タスク専用プロジェクトの固定 ID。Pane1 ダッシュボードで使用。 */
+export const PERSONAL_PROJECT_ID = "__personal__";
+
+/** 集計・表示用: カレンダー / 日別 Todo リストのアイテム型。 */
+export type CalendarTodo = Note & { projectId: string; projectName: string };

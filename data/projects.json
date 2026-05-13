@@ -1,5 +1,14 @@
 [
   {
+    "id": "__personal__",
+    "name": "マイタスク",
+    "clients": [],
+    "status": "completed",
+    "milestones": [],
+    "noteFolders": [],
+    "notes": []
+  },
+  {
     "id": "p1",
     "name": "請求書自動化ツール",
     "clients": ["株式会社ノフィ"],

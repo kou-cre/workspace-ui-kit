@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
+import { CalendarDays, ChevronRight, Plus } from "lucide-react";
 
-import { type Project } from "@/lib/schema";
+import { type Project, PERSONAL_PROJECT_ID } from "@/lib/schema";
 import { getMilestoneBadgeVariant } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import { AddItemDialog } from "@/components/workspace/AddItemDialog";
 import { Pane1Toggle } from "@/components/workspace/Pane1Toggle";
 
@@ -30,7 +31,9 @@ type ProjectListPaneProps = {
   workspaceName: string;
   projects: Project[];
   selectedProjectId: string;
+  isPersonalSelected: boolean;
   onSelectProject: (id: string) => void;
+  onSelectPersonal: () => void;
   onAddProject: (name: string) => void;
 };
 
@@ -52,13 +55,16 @@ export function ProjectListPane({
   workspaceName,
   projects,
   selectedProjectId,
+  isPersonalSelected,
   onSelectProject,
+  onSelectPersonal,
   onAddProject,
 }: ProjectListPaneProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [closedClients, setClosedClients] = useState<Set<string>>(new Set());
 
-  const clientGroups = groupByClient(projects);
+  const projectList = projects.filter(p => p.id !== PERSONAL_PROJECT_ID);
+  const clientGroups = groupByClient(projectList);
 
   const isOpen = (clientName: string) => !closedClients.has(clientName);
   const toggleClient = (clientName: string) => {
@@ -84,6 +90,29 @@ export function ProjectListPane({
         </SidebarHeader>
 
         <SidebarContent>
+          {/* マイタスク（個人ダッシュボード）エントリ */}
+          <SidebarGroup className="pb-0">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={isPersonalSelected}
+                    onClick={onSelectPersonal}
+                    tooltip="マイタスク"
+                    className="h-auto py-1.5"
+                  >
+                    <CalendarDays className="size-4 shrink-0" />
+                    <span className="font-medium group-data-[collapsible=icon]:hidden">マイタスク</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <div className="px-3 py-1 group-data-[collapsible=icon]:px-1">
+            <Separator />
+          </div>
+
           <SidebarGroup>
             <div className="flex items-center justify-between px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
               <span className="px-2 py-1 text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
@@ -103,7 +132,7 @@ export function ProjectListPane({
             <SidebarGroupContent>
               {/* アイコン折りたたみ時 */}
               <SidebarMenu className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col">
-                {projects.map((project) => (
+                {projectList.map((project) => (
                   <SidebarMenuItem key={project.id}>
                     <SidebarMenuButton
                       isActive={project.id === selectedProjectId}

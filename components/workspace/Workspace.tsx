@@ -48,6 +48,9 @@ import { ProjectListPane } from "@/components/workspace/ProjectListPane";
 import { ProjectDetailPane } from "@/components/workspace/ProjectDetailPane";
 import { NoteListPane } from "@/components/workspace/NoteListPane";
 import { NoteDetailPane } from "@/components/workspace/NoteDetailPane";
+import { CalendarPane } from "@/components/workspace/CalendarPane";
+import { DayTodoPane } from "@/components/workspace/DayTodoPane";
+import { type CalendarTodo, PERSONAL_PROJECT_ID } from "@/lib/schema";
 
 const todayLocalDate = () => {
   const d = new Date();
@@ -115,13 +118,18 @@ type WorkspaceProps = {
 export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
-    initialProjects[0]?.id ?? "",
+    initialProjects.find(p => p.id !== PERSONAL_PROJECT_ID)?.id ?? initialProjects[0]?.id ?? "",
   );
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [pane4ManuallyClosed, setPane4ManuallyClosed] = useState(false);
   const [activeDrag, setActiveDrag] = useState<{ id: string; type: string; label: string } | null>(null);
+
+  // 個人ダッシュボード
+  const [selectedView, setSelectedView] = useState<"personal" | null>(null);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(todayLocalDate);
+  const [selectedNoteProjectId, setSelectedNoteProjectId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -148,6 +156,32 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
     : [];
   const pane4Open = (activeNote !== null || activeMilestone !== null || activeFolder !== null) && !pane4ManuallyClosed;
 
+  // 個人ダッシュボード用の集計
+  const calendarTodos = useMemo<CalendarTodo[]>(() => {
+    return projects.flatMap(p =>
+      p.notes
+        .filter(n => n.date && (p.id === PERSONAL_PROJECT_ID ? true : n.isAction))
+        .map(n => ({ ...n, projectId: p.id, projectName: p.name })),
+    );
+  }, [projects]);
+
+  const dayTodos = useMemo(
+    () => calendarTodos.filter(t => t.date === selectedCalendarDate),
+    [calendarTodos, selectedCalendarDate],
+  );
+
+  const personalActiveNote = useMemo(() => {
+    if (!selectedNoteId || !selectedNoteProjectId) return null;
+    return projects.find(p => p.id === selectedNoteProjectId)?.notes.find(n => n.id === selectedNoteId) ?? null;
+  }, [selectedNoteId, selectedNoteProjectId, projects]);
+
+  const personalActiveProject = useMemo(() => {
+    if (!selectedNoteProjectId) return null;
+    return projects.find(p => p.id === selectedNoteProjectId) ?? null;
+  }, [selectedNoteProjectId, projects]);
+
+  const personalPane4Open = personalActiveNote !== null && !pane4ManuallyClosed;
+
   // ===== ユーティリティ =====
 
   const updateProjectNotes = useCallback(
@@ -165,9 +199,57 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
 
   const selectProject = useCallback((id: string) => {
     setSelectedProjectId(id);
+    setSelectedView(null);
     setSelectedNoteId(null);
     setSelectedMilestoneId(null);
     setSelectedFolderId(null);
+    setPane4ManuallyClosed(false);
+  }, []);
+
+  const selectPersonalDashboard = useCallback(() => {
+    setSelectedView("personal");
+    setSelectedNoteId(null);
+    setSelectedNoteProjectId(null);
+    setSelectedMilestoneId(null);
+    setSelectedFolderId(null);
+    setPane4ManuallyClosed(false);
+  }, []);
+
+  const toggleCalendarTodo = useCallback((noteId: string, projectId: string) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p;
+      return {
+        ...p,
+        notes: p.notes.map(n => {
+          if (n.id !== noteId) return n;
+          const newDone = !n.done;
+          return { ...n, done: newDone, status: newDone ? "解決済み" : "未解決" };
+        }),
+      };
+    }));
+  }, []);
+
+  const addPersonalTodo = useCallback((text: string, date: string) => {
+    const newNote: Note = {
+      id: `pt-${Date.now()}`,
+      date,
+      kind: "ToDo候補",
+      status: "未解決",
+      phase: null,
+      priority: "normal",
+      isAction: false,
+      done: false,
+      subtasks: [],
+      text,
+    };
+    setProjects(prev => prev.map(p =>
+      p.id === PERSONAL_PROJECT_ID ? { ...p, notes: [...p.notes, newNote] } : p,
+    ));
+  }, []);
+
+  const selectCalendarNote = useCallback((noteId: string, projectId: string) => {
+    setSelectedNoteId(noteId);
+    setSelectedNoteProjectId(projectId);
     setPane4ManuallyClosed(false);
   }, []);
 
@@ -649,18 +731,71 @@ export function Workspace({ initialProjects, workspace }: WorkspaceProps) {
         workspaceName={workspace.name}
         projects={projects}
         selectedProjectId={selectedProjectId}
+        isPersonalSelected={selectedView === "personal"}
         onSelectProject={selectProject}
+        onSelectPersonal={selectPersonalDashboard}
         onAddProject={addProject}
       />
 
       <SidebarInset className="flex min-w-0 flex-col bg-background">
         <GlobalHeader
           workspaceName={workspace.name}
-          selectedProjectName={activeProject?.name}
+          selectedProjectName={selectedView === "personal" ? "マイタスク" : activeProject?.name}
         />
 
         <div className="flex min-h-0 flex-1">
-          {activeProject ? (
+          {selectedView === "personal" ? (
+            <>
+              {/* Pane 2: 月カレンダー */}
+              <CalendarPane
+                todos={calendarTodos}
+                selectedDate={selectedCalendarDate}
+                onSelectDate={(date) => {
+                  setSelectedCalendarDate(date);
+                  setSelectedNoteId(null);
+                  setSelectedNoteProjectId(null);
+                }}
+              />
+
+              {/* Pane 3: 選択日の Todo リスト */}
+              <DayTodoPane
+                date={selectedCalendarDate}
+                todos={dayTodos}
+                selectedNoteId={selectedNoteId}
+                onSelectNote={selectCalendarNote}
+                onToggle={toggleCalendarTodo}
+                onAddPersonalTodo={addPersonalTodo}
+              />
+
+              {/* Pane 4: Todo 詳細（NoteDetailPane を流用） */}
+              {personalPane4Open && personalActiveNote && personalActiveProject && (
+                <NoteDetailPane
+                  key={personalActiveNote.id}
+                  note={personalActiveNote}
+                  milestones={personalActiveProject.milestones}
+                  noteFolders={personalActiveProject.noteFolders ?? []}
+                  pane4Open={personalPane4Open}
+                  onTogglePane4={togglePane4}
+                  onUpdateNote={(field, value) => {
+                    setProjects(prev => prev.map(p => {
+                      if (p.id !== selectedNoteProjectId) return p;
+                      return { ...p, notes: p.notes.map(n => n.id === personalActiveNote.id ? { ...n, [field]: value } : n) };
+                    }));
+                  }}
+                  onSetNotePhase={() => {}}
+                  onDeleteNote={() => {
+                    setProjects(prev => prev.map(p => {
+                      if (p.id !== selectedNoteProjectId) return p;
+                      return { ...p, notes: p.notes.filter(n => n.id !== personalActiveNote.id) };
+                    }));
+                    setSelectedNoteId(null);
+                    setSelectedNoteProjectId(null);
+                  }}
+                  onMoveToPhase={() => {}}
+                />
+              )}
+            </>
+          ) : activeProject ? (
             <DndContext
               sensors={sensors}
               collisionDetection={workspaceCollisionDetection}
