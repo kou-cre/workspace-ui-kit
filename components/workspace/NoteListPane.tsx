@@ -44,6 +44,15 @@ function sortNotes(notes: Note[], milestones: Milestone[]): Note[] {
   });
 }
 
+function sortByDateDescDoneLast(notes: Note[]): Note[] {
+  return [...notes].sort((a, b) => {
+    const aDone = isDone(a);
+    const bDone = isDone(b);
+    if (aDone !== bDone) return aDone ? 1 : -1;
+    return b.date.localeCompare(a.date);
+  });
+}
+
 function sortNotesForFolder(notes: Note[], sort: string): Note[] {
   return [...notes].sort((a, b) => {
     const aDone = isDone(a);
@@ -62,14 +71,15 @@ function sortNotesForFolder(notes: Note[], sort: string): Note[] {
   });
 }
 
-const KIND_VARIANT: Record<Note["kind"], "default" | "secondary" | "outline"> = {
+const KIND_VARIANT: Record<Note["kind"], "default" | "secondary" | "outline" | "destructive"> = {
+  Todo: "default",
   アイデア: "secondary",
   議論余地: "outline",
-  "ToDo候補": "default",
-  ブレインダンプ: "secondary",
-  週次振り返り: "secondary",
-  月次振り返り: "secondary",
+  課題: "destructive",
+  メモ: "secondary",
 };
+
+const KIND_QUICK_ADD: Note["kind"][] = ["Todo", "アイデア", "議論余地", "課題", "メモ"];
 
 // ===== Context Menu =====
 
@@ -196,12 +206,10 @@ function NoteRow({
   onContextMenu,
   onPromoteToAction,
 }: NoteRowProps) {
-  // isAction=true のメモは ProjectDetailPane の useSortable と同じ id で登録されるため
-  // DndContext 内で id 衝突が起き DragOverlay の位置がずれる。action 化済みは disabled にする。
+  // プレフィックス付き ID でワークスペース DndContext の useSortable ID と衝突を回避する。
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: note.isAction ? `__noop-${note.id}` : note.id,
-    data: { type: "note", label: note.text || "メモ" },
-    disabled: note.isAction,
+    id: `notelist-${note.id}`,
+    data: { type: "note", label: note.title || note.text || "メモ", noteId: note.id, isAction: note.isAction },
   });
 
   const isEditing = editingNoteId === note.id;
@@ -216,19 +224,16 @@ function NoteRow({
         isSelected && "bg-accent",
       )}
     >
-      {/* ドラッグハンドル — action 化済みは ProjectDetailPane で管理するため非表示 */}
-      {!note.isAction && (
-        <button
-          ref={setNodeRef}
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="mt-1 cursor-grab touch-none text-muted-foreground opacity-0 transition-opacity active:cursor-grabbing focus-visible:opacity-100 group-hover:opacity-100"
-          aria-label="ドラッグしてマイルストーンに移動"
-        >
-          <GripVertical className="size-4" />
-        </button>
-      )}
+      <button
+        ref={setNodeRef}
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="mt-1 cursor-grab touch-none text-muted-foreground opacity-0 transition-opacity active:cursor-grabbing focus-visible:opacity-100 group-hover:opacity-100"
+        aria-label="ドラッグしてマイルストーンに移動"
+      >
+        <GripVertical className="size-4" />
+      </button>
 
       <Checkbox
         id={`note-status-${note.id}`}
@@ -257,19 +262,10 @@ function NoteRow({
           <Badge variant={KIND_VARIANT[note.kind]} size="xs">
             {note.kind}
           </Badge>
-          <Badge
-            variant={note.status === "解決済み" ? "delivered" : "outline"}
-            size="xs"
-          >
-            {note.status}
-          </Badge>
           {milestoneLabel && (
             <Badge variant="secondary" size="xs">
               {milestoneLabel}
             </Badge>
-          )}
-          {note.isAction && (
-            <Badge variant="default" size="xs">アクション</Badge>
           )}
           {(() => {
             const done = isDone(note);
@@ -309,7 +305,7 @@ function NoteRow({
               if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); onCommitEdit(); }
               if (e.key === "Escape") onCancelEdit();
             }}
-            placeholder="メモの内容を入力..."
+            placeholder="タイトルを入力..."
             className="h-7 bg-background text-sm"
           />
         ) : (
@@ -322,10 +318,10 @@ function NoteRow({
               "cursor-text rounded px-0.5 text-sm leading-relaxed hover:bg-accent/50",
               note.status === "解決済み"
                 ? "text-muted-foreground line-through"
-                : note.text ? "text-foreground" : "text-muted-foreground",
+                : (note.title || note.text) ? "text-foreground" : "text-muted-foreground",
             )}
           >
-            {note.text || "未記入"}
+            {note.title || note.text || "未記入"}
           </p>
         )}
       </div>
@@ -366,10 +362,12 @@ type NoteListPaneProps = {
   milestones: Milestone[];
   noteFolders: NoteFolder[];
   selectedNoteId: string | null;
+  currentUserName: string;
+  isShared?: boolean;
   onSelectNote: (id: string) => void;
   onAddNote: (phase?: StatusKey | null, defaults?: { kind?: NoteKind; status?: NoteStatus }) => void;
   onToggleNoteStatus: (id: string) => void;
-  onUpdateNoteText: (id: string, text: string) => void;
+  onUpdateNoteTitle: (id: string, title: string) => void;
   onUpdateNotePriority: (id: string, priority: string) => void;
   onPromoteToAction: (id: string, phase: StatusKey) => void;
   onDeleteNote: (id: string) => void;
@@ -382,10 +380,12 @@ export function NoteListPane({
   milestones,
   noteFolders,
   selectedNoteId,
+  currentUserName,
+  isShared = false,
   onSelectNote,
   onAddNote,
   onToggleNoteStatus,
-  onUpdateNoteText,
+  onUpdateNoteTitle,
   onUpdateNotePriority,
   onPromoteToAction,
   onDeleteNote,
@@ -393,6 +393,8 @@ export function NoteListPane({
   onSelectFolder,
 }: NoteListPaneProps) {
   const [phaseFilter, setPhaseFilter] = useState<string | null>(null);
+  const [kindFilter, setKindFilter] = useState<NoteKind | null>(null);
+  const [myAssignOnly, setMyAssignOnly] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [ctxMenu, setCtxMenu] = useState<CtxState>(null);
@@ -406,14 +408,18 @@ export function NoteListPane({
   const activeFolder = noteFolders.find((f) => f.id === phaseFilter) ?? null;
 
   const baseNotes = phaseFilter === null ? notes : notes.filter((n) => n.phase === phaseFilter);
+  const assignFiltered = myAssignOnly ? baseNotes.filter((n) => n.assignee === currentUserName) : baseNotes;
+  const kindFiltered = kindFilter ? assignFiltered.filter((n) => n.kind === kindFilter) : assignFiltered;
   const filteredNotes = activeFolder
     ? sortNotesForFolder(
-        baseNotes
+        kindFiltered
           .filter((n) => !activeFolder.filterKind || n.kind === activeFolder.filterKind)
           .filter((n) => !activeFolder.filterStatus || n.status === activeFolder.filterStatus),
         activeFolder.sort ?? "date-desc",
       )
-    : sortNotes(baseNotes, milestones);
+    : kindFilter
+      ? sortByDateDescDoneLast(kindFiltered)
+      : sortNotes(kindFiltered, milestones);
 
   const handleAddNote = () => {
     onAddNote(
@@ -426,12 +432,12 @@ export function NoteListPane({
 
   const startEdit = (note: Note) => {
     setEditingNoteId(note.id);
-    setEditingText(note.text);
+    setEditingText(note.title);
     onSelectNote(note.id);
   };
 
   const commitEdit = (noteId: string) => {
-    onUpdateNoteText(noteId, editingText);
+    onUpdateNoteTitle(noteId, editingText);
     setEditingNoteId(null);
   };
 
@@ -455,19 +461,30 @@ export function NoteListPane({
   };
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col border-r border-border bg-canvas">
+    <div className="flex min-w-0 min-h-0 flex-1 flex-col border-r border-border bg-canvas">
       {/* ヘッダー */}
-      <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
-        <p className="font-medium">メモ</p>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleAddNote}
-          aria-label="メモを追加"
-          className="size-7 text-muted-foreground hover:text-foreground"
-        >
-          <Plus />
-        </Button>
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
+        <p className="shrink-0 font-medium">メモ</p>
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+          {KIND_QUICK_ADD.map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => onAddNote(phaseFilter, { kind })}
+              className={cn(
+                "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium transition-colors hover:opacity-80",
+                kind === "Todo" && "border-primary bg-primary text-primary-foreground",
+                kind === "アイデア" && "border-border bg-muted text-foreground",
+                kind === "議論余地" && "border-border bg-transparent text-foreground",
+                kind === "課題" && "border-destructive bg-destructive text-destructive-foreground",
+                kind === "メモ" && "border-border bg-muted text-foreground",
+              )}
+              aria-label={`${kind}のメモを追加`}
+            >
+              + {kind}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* フォルダフィルター */}
@@ -475,16 +492,32 @@ export function NoteListPane({
         {/* 全体 */}
         <button
           type="button"
-          onClick={() => { setPhaseFilter(null); onSelectFolder(null); }}
+          onClick={() => { setPhaseFilter(null); setKindFilter(null); setMyAssignOnly(false); onSelectFolder(null); }}
           className={cn(
             "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
-            phaseFilter === null
+            phaseFilter === null && kindFilter === null && !myAssignOnly
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
           全体
         </button>
+
+        {/* 自分の担当 — 共有プロジェクトのみ表示 */}
+        {isShared && (
+          <button
+            type="button"
+            onClick={() => { setMyAssignOnly((v) => !v); setPhaseFilter(null); setKindFilter(null); onSelectFolder(null); }}
+            className={cn(
+              "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
+              myAssignOnly
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            自分の担当
+          </button>
+        )}
 
         {/* マイルストーン（DropdownMenu） */}
         <DropdownMenu>
@@ -520,6 +553,31 @@ export function NoteListPane({
             })}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* 種類タブ */}
+        {KIND_QUICK_ADD.map((kind) => {
+          const count = baseNotes.filter((n) => n.kind === kind).length;
+          return (
+            <button
+              key={`kind-tab-${kind}`}
+              type="button"
+              onClick={() => setKindFilter(kindFilter === kind ? null : kind)}
+              className={cn(
+                "flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
+                kindFilter === kind
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
+            >
+              {kind}
+              {count > 0 && (
+                <span className={cn("tabular-nums", kindFilter === kind ? "opacity-80" : "opacity-60")}>
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
 
         {/* カスタムフォルダ */}
         {noteFolders.map((folder) => {
@@ -581,7 +639,7 @@ export function NoteListPane({
       </div>
 
       {/* メモ一覧 */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         {filteredNotes.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-12 text-center">
             <p className="text-sm text-muted-foreground">

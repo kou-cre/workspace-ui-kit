@@ -32,10 +32,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-/** Combobox の選択肢。`value` は ID 兼ラベル、`description` は補助説明。 */
+/** Combobox の選択肢。`value` は ID 兼ラベル、`description` は補助説明、`image` はアバター画像 URL。 */
 export type ComboOption = {
   value: string;
   description: string;
+  image?: string;
 };
 
 export type InlineComboboxFieldProps = {

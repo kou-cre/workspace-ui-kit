@@ -42,14 +42,14 @@ export function NoteFolderDetailPane({
   onUpdateFolder,
 }: NoteFolderDetailPaneProps) {
   return (
-    <div className="flex w-72 shrink-0 flex-col border-l border-border bg-card">
+    <div className="flex w-72 min-h-0 shrink-0 flex-col border-l border-border bg-card">
       {/* ヘッダー */}
       <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
         <p className="text-sm font-medium text-muted-foreground">メモフォルダ詳細</p>
         <Pane4Toggle open={pane4Open} onToggle={onTogglePane4} />
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col gap-4 px-4 py-4">
           <dl className="flex flex-col gap-3 text-sm">
             <InlineFieldRow label="名前">

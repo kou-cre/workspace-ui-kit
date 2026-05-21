@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { InlineDateField } from "@/components/primitives/InlineDateField";
 import { InlineFieldRow } from "@/components/primitives/InlineFieldRow";
 import { InlineSelectField } from "@/components/primitives/InlineSelectField";
+import { InlineTextField } from "@/components/primitives/InlineTextField";
 import { InlineTextareaField } from "@/components/primitives/InlineTextareaField";
 import { DeleteConfirmDialog } from "@/components/workspace/DeleteConfirmDialog";
 import { Pane4Toggle } from "@/components/workspace/Pane4Toggle";
@@ -33,6 +34,7 @@ type NoteDetailPaneProps = {
   milestones: Milestone[];
   noteFolders: NoteFolder[];
   pane4Open: boolean;
+  currentUserName: string;
   onTogglePane4: () => void;
   onUpdateNote: (field: keyof Note, value: string) => void;
   onSetNotePhase: (phase: StatusKey | null) => void;
@@ -45,12 +47,14 @@ export function NoteDetailPane({
   milestones,
   noteFolders,
   pane4Open,
+  currentUserName,
   onTogglePane4,
   onUpdateNote,
   onSetNotePhase,
   onDeleteNote,
   onMoveToPhase,
 }: NoteDetailPaneProps) {
+  const assigneeOptions = ["未設定", currentUserName];
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const phaseOptions = [
@@ -77,21 +81,34 @@ export function NoteDetailPane({
     : "なし";
 
   return (
-    <div className="flex w-72 shrink-0 flex-col border-l border-border bg-card">
+    <div className="flex w-72 min-h-0 shrink-0 flex-col border-l border-border bg-card">
       {/* ヘッダー */}
       <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
         <p className="text-sm font-medium text-muted-foreground">メモ詳細</p>
         <Pane4Toggle open={pane4Open} onToggle={onTogglePane4} />
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col gap-4 px-4 py-4">
           <dl className="flex flex-col gap-3 text-sm">
+            <InlineFieldRow label="タイトル">
+              <InlineTextField
+                value={note.title}
+                onSave={(v) => onUpdateNote("title", v)}
+                ariaLabel="メモのタイトル"
+                placeholder="タイトルを入力..."
+              />
+            </InlineFieldRow>
+
             <InlineFieldRow label="日付">
               <InlineDateField
                 value={note.date}
                 onSave={(v) => onUpdateNote("date", v)}
                 ariaLabel="日付"
+                endValue={note.endDate}
+                onSaveEnd={(v) => onUpdateNote("endDate", v)}
+                timeValue={note.time}
+                onSaveTime={(v) => onUpdateNote("time", v)}
               />
             </InlineFieldRow>
 
@@ -133,16 +150,25 @@ export function NoteDetailPane({
                 ariaLabel="グループ"
               />
             </InlineFieldRow>
+
+            <InlineFieldRow label="担当者">
+              <InlineSelectField
+                value={note.assignee || "未設定"}
+                options={assigneeOptions}
+                onSave={(v) => onUpdateNote("assignee", v === "未設定" ? "" : v)}
+                ariaLabel="担当者"
+              />
+            </InlineFieldRow>
           </dl>
 
           <Separator />
 
           <div className="flex flex-col gap-1.5">
-            <p className="text-sm text-muted-foreground">内容</p>
+            <p className="text-sm text-muted-foreground">詳細</p>
             <InlineTextareaField
               value={note.text}
               onSave={(v) => onUpdateNote("text", v)}
-              ariaLabel="メモの内容"
+              ariaLabel="メモの詳細"
               placeholder="詳細を記入... (Cmd+Enter で保存)"
             />
           </div>

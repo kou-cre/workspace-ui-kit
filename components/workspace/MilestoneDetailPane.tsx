@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { InlineDateField } from "@/components/primitives/InlineDateField";
 import { InlineFieldRow } from "@/components/primitives/InlineFieldRow";
 import { InlineTextField } from "@/components/primitives/InlineTextField";
+import { InlineTextareaField } from "@/components/primitives/InlineTextareaField";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Pane4Toggle } from "@/components/workspace/Pane4Toggle";
@@ -17,6 +18,7 @@ type MilestoneDetailPaneProps = {
   onTogglePane4: () => void;
   onUpdateLabel: (label: string) => void;
   onUpdateDueDate: (date: string | null) => void;
+  onUpdateDescription: (description: string) => void;
 };
 
 export function MilestoneDetailPane({
@@ -26,17 +28,19 @@ export function MilestoneDetailPane({
   onTogglePane4,
   onUpdateLabel,
   onUpdateDueDate,
+  onUpdateDescription,
 }: MilestoneDetailPaneProps) {
   const doneCount = actions.filter((a) => a.done).length;
   const pct =
     actions.length === 0 ? 0 : Math.round((doneCount / actions.length) * 100);
 
-  const daysLabel = milestone.dueDate ? getDaysLabel(milestone.dueDate) : null;
+  const isAllDone = actions.length > 0 && doneCount === actions.length;
+  const daysLabel = milestone.dueDate && !isAllDone ? getDaysLabel(milestone.dueDate) : null;
   const isOverdue = daysLabel?.includes("超過") ?? false;
   const isToday = daysLabel === "今日";
 
   return (
-    <div className="flex w-72 shrink-0 flex-col border-l border-border bg-card">
+    <div className="flex w-72 min-h-0 shrink-0 flex-col border-l border-border bg-card">
       {/* ヘッダー */}
       <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
         <p className="text-sm font-medium text-muted-foreground">
@@ -45,7 +49,7 @@ export function MilestoneDetailPane({
         <Pane4Toggle open={pane4Open} onToggle={onTogglePane4} />
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col gap-4 px-4 py-4">
           <dl className="flex flex-col gap-3 text-sm">
             <InlineFieldRow label="名前">
@@ -62,6 +66,15 @@ export function MilestoneDetailPane({
                 value={milestone.dueDate ?? ""}
                 onSave={(v) => onUpdateDueDate(v || null)}
                 ariaLabel="マイルストーン期日"
+              />
+            </InlineFieldRow>
+
+            <InlineFieldRow label="概要">
+              <InlineTextareaField
+                value={milestone.description ?? ""}
+                onSave={onUpdateDescription}
+                ariaLabel="マイルストーン概要"
+                placeholder="このマイルストーンの概要を入力..."
               />
             </InlineFieldRow>
           </dl>
@@ -120,7 +133,7 @@ export function MilestoneDetailPane({
                       a.done && "text-muted-foreground line-through",
                     )}
                   >
-                    {a.text}
+                    {a.title || a.text}
                   </span>
                 </div>
               ))}

@@ -2,23 +2,40 @@
 
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useDroppable } from "@dnd-kit/core";
+import {
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { type CalendarTodo } from "@/lib/schema";
+import { CalendarDays } from "lucide-react";
+import { type CalendarTodo, type GoogleCalendarEvent } from "@/lib/schema";
 
-const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
-const MAX_CHIPS = 2;
-const REVIEW_KINDS = new Set(["ブレインダンプ", "週次振り返り", "月次振り返り"]);
+const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
+const MAX_VISIBLE = 3;
+
+const CHIP_COLORS = [
+  "bg-chart-1/15 text-chart-1",
+  "bg-chart-2/15 text-chart-2",
+  "bg-chart-3/15 text-chart-3",
+  "bg-chart-4/15 text-chart-4",
+  "bg-chart-5/15 text-chart-5",
+];
+
+function getChipColor(projectId: string): string {
+  let h = 0;
+  for (let i = 0; i < projectId.length; i++) h = (h * 31 + projectId.charCodeAt(i)) & 0xff;
+  return CHIP_COLORS[h % CHIP_COLORS.length];
+}
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function buildCalendarWeeks(year: number, month: number) {
+function buildCalendarDays(year: number, month: number) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  const firstDayOfWeek = firstDay.getDay(); // Sun=0
+  const firstDayOfWeek = (firstDay.getDay() + 6) % 7; // Mon=0
 
   const days: Array<{ date: Date; isCurrent: boolean }> = [];
   for (let i = 0; i < firstDayOfWeek; i++) {
@@ -31,49 +48,100 @@ function buildCalendarWeeks(year: number, month: number) {
   for (let i = 1; i <= remainder; i++) {
     days.push({ date: new Date(year, month + 1, i), isCurrent: false });
   }
-
-  const weeks: Array<Array<{ date: Date; isCurrent: boolean }>> = [];
-  for (let i = 0; i < days.length; i += 7) {
-    weeks.push(days.slice(i, i + 7));
-  }
-  return weeks;
+  return days;
 }
 
 const isDone = (t: CalendarTodo) =>
   t.status === "解決済み" || (t.isAction && t.done);
 
-// ===== DroppableDayCell =====
+// ===== DraggableTodoChip =====
 
-type DayCellProps = {
-  dateStr: string;
-  date: Date;
-  isCurrent: boolean;
-  dayTodos: CalendarTodo[];
+function DraggableTodoChip({
+  todo,
+  isSelected,
+}: {
+  todo: CalendarTodo;
   isSelected: boolean;
-  isToday: boolean;
-  isWeekSelected: boolean;
-  dow: number;
-  onSelectDate: (date: string) => void;
-};
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `cal-todo-${todo.id}`,
+    data: { type: "calendar-todo", todo },
+  });
+  const done = isDone(todo);
+  const chipColor = getChipColor(todo.projectId);
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "w-full truncate rounded px-1 py-px leading-tight",
+        "cursor-grab active:cursor-grabbing touch-none select-none",
+        isDragging && "opacity-20",
+        isSelected
+          ? done
+            ? "bg-primary-foreground/15 text-primary-foreground/50 line-through"
+            : "bg-primary-foreground/20 text-primary-foreground"
+          : done
+          ? "bg-muted-foreground/10 text-muted-foreground line-through"
+          : chipColor,
+      )}
+    >
+      {todo.title || todo.text || "(無題)"}
+    </div>
+  );
+}
+
+// ===== GoogleEventChip =====
+
+function GoogleEventChip({ title, isSelected }: { title: string; isSelected: boolean }) {
+  return (
+    <div
+      className={cn(
+        "flex w-full min-w-0 items-center gap-0.5 truncate rounded px-1 py-px leading-tight text-xs",
+        isSelected
+          ? "bg-primary-foreground/20 text-primary-foreground"
+          : "bg-primary/10 text-primary",
+      )}
+    >
+      <CalendarDays className="size-2.5 shrink-0" />
+      <span className="truncate">{title}</span>
+    </div>
+  );
+}
+
+// ===== DroppableDayCell =====
 
 function DroppableDayCell({
   dateStr,
-  date,
-  isCurrent,
-  dayTodos,
   isSelected,
   isToday,
-  isWeekSelected,
+  isCurrent,
   dow,
+  date,
+  dayTodos,
+  googleDayEvents,
   onSelectDate,
-}: DayCellProps) {
+}: {
+  dateStr: string;
+  isSelected: boolean;
+  isToday: boolean;
+  isCurrent: boolean;
+  dow: number;
+  date: Date;
+  dayTodos: CalendarTodo[];
+  googleDayEvents: GoogleCalendarEvent[];
+  onSelectDate: (d: string) => void;
+}) {
   const { setNodeRef, isOver } = useDroppable({
-    id: `day-${dateStr}`,
-    data: { type: "calendar-day", date: dateStr },
+    id: `cal-day-${dateStr}`,
+    data: { type: "calendar-day", dateStr },
   });
 
-  const visibleTodos = dayTodos.slice(0, MAX_CHIPS);
-  const overflowCount = dayTodos.length - MAX_CHIPS;
+  const allItems = [...googleDayEvents.map((e) => ({ kind: "google" as const, event: e })), ...dayTodos.map((t) => ({ kind: "todo" as const, todo: t }))];
+  const visible = allItems.slice(0, MAX_VISIBLE);
+  const overflow = allItems.length - MAX_VISIBLE;
 
   return (
     <button
@@ -81,46 +149,46 @@ function DroppableDayCell({
       type="button"
       onClick={() => onSelectDate(dateStr)}
       className={cn(
-        "flex flex-col items-start gap-0.5 overflow-hidden rounded-md p-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex min-h-0 flex-col overflow-hidden rounded-md p-1 text-left text-xs transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSelected
           ? "bg-primary text-primary-foreground"
-          : isOver
-          ? "bg-primary/20 ring-2 ring-inset ring-primary"
           : isToday
-          ? "bg-muted font-semibold"
-          : isWeekSelected
-          ? "bg-primary/5 hover:bg-primary/10"
+          ? "bg-muted"
           : "hover:bg-accent",
         !isCurrent && "opacity-35",
-        dow === 6 && !isSelected && "text-primary",
-        dow === 0 && !isSelected && "text-destructive",
+        isOver && !isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
       )}
     >
-      <span className="w-full text-center tabular-nums leading-none">{date.getDate()}</span>
-      <div className="flex w-full flex-col gap-px">
-        {visibleTodos.map(t => (
+      {/* 日付数字 */}
+      <span
+        className={cn(
+          "mb-0.5 w-full text-right tabular-nums leading-none",
+          isToday && !isSelected && "font-semibold",
+          dow === 5 && !isSelected && "text-primary",
+          dow === 6 && !isSelected && "text-destructive",
+        )}
+      >
+        {date.getDate()}
+      </span>
+
+      {/* チップ（Google Calendar + ワークスペース Todo） */}
+      <div className="flex min-h-0 flex-col gap-px overflow-hidden">
+        {visible.map((item) =>
+          item.kind === "google" ? (
+            <GoogleEventChip key={`g-${item.event.id}`} title={item.event.title} isSelected={isSelected} />
+          ) : (
+            <DraggableTodoChip key={item.todo.id} todo={item.todo} isSelected={isSelected} />
+          ),
+        )}
+        {overflow > 0 && (
           <span
-            key={t.id}
             className={cn(
-              "w-full truncate rounded px-0.5 text-[10px] leading-4",
-              isSelected
-                ? "bg-primary-foreground/20 text-primary-foreground"
-                : isDone(t)
-                ? "text-muted-foreground line-through"
-                : "bg-primary/15 text-primary",
-            )}
-          >
-            {t.text || "…"}
-          </span>
-        ))}
-        {overflowCount > 0 && (
-          <span
-            className={cn(
-              "px-0.5 text-[10px] leading-4",
+              "px-1 leading-tight",
               isSelected ? "text-primary-foreground/70" : "text-muted-foreground",
             )}
           >
-            +{overflowCount}件
+            +{overflow}
           </span>
         )}
       </div>
@@ -130,71 +198,100 @@ function DroppableDayCell({
 
 // ===== CalendarPane =====
 
-type CalendarScope = "day" | "week" | "month";
-
 type Props = {
   todos: CalendarTodo[];
   selectedDate: string;
-  selectedScope: CalendarScope;
   onSelectDate: (date: string) => void;
-  onSelectWeek: (weekStart: string) => void;
-  onSelectMonth: (monthKey: string) => void;
+  activeTab?: "calendar" | "summary";
+  onTabChange?: (tab: "calendar" | "summary") => void;
+  googleEvents?: GoogleCalendarEvent[];
 };
 
 export function CalendarPane({
   todos,
   selectedDate,
-  selectedScope,
   onSelectDate,
-  onSelectWeek,
-  onSelectMonth,
+  activeTab,
+  onTabChange,
+  googleEvents = [],
 }: Props) {
   const today = toDateStr(new Date());
-
   const [viewYear, setViewYear] = useState(() => Number(selectedDate.split("-")[0]));
   const [viewMonth, setViewMonth] = useState(() => Number(selectedDate.split("-")[1]) - 1);
 
-  const todosPerDay = useMemo(() => {
+  const todosByDate = useMemo(() => {
     const map: Record<string, CalendarTodo[]> = {};
     for (const t of todos) {
-      if (!t.date || REVIEW_KINDS.has(t.kind)) continue;
+      if (!t.date) continue;
       if (!map[t.date]) map[t.date] = [];
       map[t.date].push(t);
+    }
+    for (const dateStr in map) {
+      map[dateStr].sort((a, b) => (isDone(a) ? 1 : 0) - (isDone(b) ? 1 : 0));
     }
     return map;
   }, [todos]);
 
-  const weeks = useMemo(() => buildCalendarWeeks(viewYear, viewMonth), [viewYear, viewMonth]);
+  const googleEventsByDate = useMemo(() => {
+    const map: Record<string, GoogleCalendarEvent[]> = {};
+    for (const e of googleEvents) {
+      if (!e.start) continue;
+      if (!map[e.start]) map[e.start] = [];
+      map[e.start].push(e);
+    }
+    return map;
+  }, [googleEvents]);
+
+  const days = useMemo(() => buildCalendarDays(viewYear, viewMonth), [viewYear, viewMonth]);
 
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
-    else setViewMonth(m => m - 1);
+    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
+    else setViewMonth((m) => m - 1);
   };
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
-    else setViewMonth(m => m + 1);
+    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
+    else setViewMonth((m) => m + 1);
   };
 
-  const viewMonthKey = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
-  const isMonthSelected = selectedScope === "month" && selectedDate.slice(0, 7) === viewMonthKey;
-
   return (
-    <div className="flex min-w-0 flex-1 flex-col border-r border-border bg-canvas">
+    <div className="flex min-w-0 min-h-0 flex-1 flex-col border-r border-border bg-canvas">
       {/* ヘッダー */}
-      <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
-        <div className="flex items-center gap-1">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
+        {onTabChange && (
+          <div className="flex items-center rounded-md border border-border bg-muted/40 p-0.5">
+            <button
+              type="button"
+              onClick={() => onTabChange("calendar")}
+              className={cn(
+                "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                activeTab === "calendar"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              カレンダー
+            </button>
+            <button
+              type="button"
+              onClick={() => onTabChange("summary")}
+              className={cn(
+                "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                activeTab === "summary"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              プロジェクトサマリー
+            </button>
+          </div>
+        )}
+        <div className="flex flex-1 items-center gap-1">
           <Button variant="ghost" size="icon-sm" onClick={prevMonth} aria-label="前月" className="size-7">
             <ChevronLeft className="size-4" />
           </Button>
-          <button
-            onClick={() => onSelectMonth(viewMonthKey)}
-            className={cn(
-              "min-w-[7rem] rounded px-2 py-0.5 text-center text-sm font-medium tabular-nums transition-colors hover:bg-accent",
-              isMonthSelected && "bg-primary text-primary-foreground hover:bg-primary/90",
-            )}
-          >
+          <span className="min-w-[7rem] text-center text-sm font-medium tabular-nums">
             {viewYear}年{viewMonth + 1}月
-          </button>
+          </span>
           <Button variant="ghost" size="icon-sm" onClick={nextMonth} aria-label="次月" className="size-7">
             <ChevronRight className="size-4" />
           </Button>
@@ -209,19 +306,18 @@ export function CalendarPane({
         </Button>
       </div>
 
-      {/* カレンダーグリッド */}
-      <div className="flex min-h-0 flex-1 flex-col gap-1 p-3">
+      {/* カレンダーグリッド（DndContext は Workspace 側で包む） */}
+      <div className="flex min-h-0 flex-1 flex-col gap-px p-2">
         {/* 曜日ヘッダー */}
-        <div className="grid grid-cols-[1.5rem_repeat(7,1fr)] gap-px">
-          <div />
+        <div className="grid grid-cols-7">
           {WEEKDAY_LABELS.map((label, i) => (
             <div
               key={label}
               className={cn(
                 "flex items-center justify-center py-1 text-xs font-medium",
-                i === 6 && "text-primary",
-                i === 0 && "text-destructive",
-                i !== 6 && i !== 0 && "text-muted-foreground",
+                i === 5 && "text-primary",
+                i === 6 && "text-destructive",
+                i !== 5 && i !== 6 && "text-muted-foreground",
               )}
             >
               {label}
@@ -229,48 +325,29 @@ export function CalendarPane({
           ))}
         </div>
 
-        {/* 週行 */}
-        <div className="flex min-h-0 flex-1 flex-col gap-px">
-          {weeks.map((week, weekIdx) => {
-            const weekStart = toDateStr(week[0].date);
-            const isWeekSelected = selectedScope === "week" && selectedDate === weekStart;
+        {/* 日セル */}
+        <div className="grid flex-1 auto-rows-fr grid-cols-7 gap-px">
+          {days.map(({ date, isCurrent }, idx) => {
+            const dateStr = toDateStr(date);
+            const dayTodos = todosByDate[dateStr] ?? [];
+            const googleDayEvents = googleEventsByDate[dateStr] ?? [];
+            const isSelected = dateStr === selectedDate;
+            const isToday = dateStr === today;
+            const dow = (date.getDay() + 6) % 7;
 
             return (
-              <div key={weekIdx} className="grid min-h-0 flex-1 grid-cols-[1.5rem_repeat(7,1fr)] gap-px">
-                {/* 週セレクタ */}
-                <button
-                  onClick={() => onSelectWeek(weekStart)}
-                  aria-label="この週を選択"
-                  className={cn(
-                    "flex items-center justify-center rounded-sm transition-colors hover:bg-accent",
-                    isWeekSelected && "bg-primary/10",
-                  )}
-                >
-                  <span className={cn(
-                    "h-5 w-1 rounded-full transition-colors",
-                    isWeekSelected ? "bg-primary" : "bg-muted-foreground/20",
-                  )} />
-                </button>
-
-                {/* 日セル */}
-                {week.map(({ date, isCurrent }, idx) => {
-                  const dateStr = toDateStr(date);
-                  return (
-                    <DroppableDayCell
-                      key={idx}
-                      dateStr={dateStr}
-                      date={date}
-                      isCurrent={isCurrent}
-                      dayTodos={todosPerDay[dateStr] ?? []}
-                      isSelected={selectedScope === "day" && dateStr === selectedDate}
-                      isToday={dateStr === today}
-                      isWeekSelected={isWeekSelected}
-                      dow={date.getDay()}
-                      onSelectDate={onSelectDate}
-                    />
-                  );
-                })}
-              </div>
+              <DroppableDayCell
+                key={idx}
+                dateStr={dateStr}
+                isSelected={isSelected}
+                isToday={isToday}
+                isCurrent={isCurrent}
+                dow={dow}
+                date={date}
+                dayTodos={dayTodos}
+                googleDayEvents={googleDayEvents}
+                onSelectDate={onSelectDate}
+              />
             );
           })}
         </div>

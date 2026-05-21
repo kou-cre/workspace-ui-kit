@@ -40,17 +40,17 @@
     "clients": ["株式会社ノフィ"],
     "status": "development",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング" },
-      { "id": "proposal", "label": "提案中" },
-      { "id": "development", "label": "開発中" },
-      { "id": "delivery", "label": "納品済み" },
-      { "id": "maintenance", "label": "保守" }
+      { "id": "hearing", "label": "ヒアリング", "dueDate": null, "description": "" },
+      { "id": "proposal", "label": "提案中", "dueDate": null, "description": "" },
+      { "id": "development", "label": "開発中", "dueDate": "2026-05-25", "description": "" },
+      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
+      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
     ],
     "notes": [
       {
         "id": "pa1-1",
         "date": "2026-04-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "hearing",
         "isAction": true,
@@ -62,7 +62,7 @@
       {
         "id": "pa1-2",
         "date": "2026-04-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "hearing",
         "isAction": true,
@@ -74,7 +74,7 @@
       {
         "id": "pa1-3",
         "date": "2026-04-10",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "proposal",
         "isAction": true,
@@ -86,7 +86,7 @@
       {
         "id": "pa1-4",
         "date": "2026-04-10",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "proposal",
         "isAction": true,
@@ -98,7 +98,7 @@
       {
         "id": "pa1-5",
         "date": "2026-05-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "development",
         "isAction": true,
@@ -110,7 +110,7 @@
       {
         "id": "pa1-6",
         "date": "2026-05-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "development",
         "isAction": true,
@@ -151,17 +151,17 @@
     "clients": ["合同会社ミハナ"],
     "status": "proposal",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング" },
-      { "id": "proposal", "label": "提案中" },
-      { "id": "development", "label": "開発中" },
-      { "id": "delivery", "label": "納品済み" },
-      { "id": "maintenance", "label": "保守" }
+      { "id": "hearing", "label": "ヒアリング", "dueDate": null, "description": "" },
+      { "id": "proposal", "label": "提案中", "dueDate": "2026-05-20", "description": "" },
+      { "id": "development", "label": "開発中", "dueDate": null, "description": "" },
+      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
+      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
     ],
     "notes": [
       {
         "id": "pa2-1",
         "date": "2026-04-15",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "hearing",
         "isAction": true,
@@ -173,7 +173,7 @@
       {
         "id": "pa2-2",
         "date": "2026-04-15",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "hearing",
         "isAction": true,
@@ -185,7 +185,7 @@
       {
         "id": "pa2-3",
         "date": "2026-05-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "proposal",
         "isAction": true,
@@ -197,7 +197,7 @@
       {
         "id": "pa2-4",
         "date": "2026-05-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "proposal",
         "isAction": true,
@@ -209,7 +209,7 @@
       {
         "id": "n2-1",
         "date": "2026-05-05",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "proposal",
         "isAction": false,
@@ -226,17 +226,17 @@
     "clients": ["田中商事"],
     "status": "hearing",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング" },
-      { "id": "proposal", "label": "提案中" },
-      { "id": "development", "label": "開発中" },
-      { "id": "delivery", "label": "納品済み" },
-      { "id": "maintenance", "label": "保守" }
+      { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-05-12", "description": "" },
+      { "id": "proposal", "label": "提案中", "dueDate": null, "description": "" },
+      { "id": "development", "label": "開発中", "dueDate": null, "description": "" },
+      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
+      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
     ],
     "notes": [
       {
         "id": "pa3-1",
         "date": "2026-05-10",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "hearing",
         "isAction": true,
@@ -248,7 +248,7 @@
       {
         "id": "pa3-2",
         "date": "2026-05-10",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "hearing",
         "isAction": true,
@@ -275,7 +275,7 @@
       {
         "id": "pa4-1",
         "date": "2026-03-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "hearing",
         "isAction": true,
@@ -287,7 +287,7 @@
       {
         "id": "pa4-2",
         "date": "2026-03-10",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "proposal",
         "isAction": true,
@@ -299,7 +299,7 @@
       {
         "id": "pa4-3",
         "date": "2026-04-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "development",
         "isAction": true,
@@ -311,7 +311,7 @@
       {
         "id": "pa4-4",
         "date": "2026-04-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "development",
         "isAction": true,
@@ -323,7 +323,7 @@
       {
         "id": "pa4-5",
         "date": "2026-04-20",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "delivery",
         "isAction": true,
@@ -335,7 +335,7 @@
       {
         "id": "pa4-6",
         "date": "2026-04-20",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "delivery",
         "isAction": true,
@@ -374,7 +374,7 @@
       {
         "id": "pa5-1",
         "date": "2026-04-20",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "hearing",
         "isAction": true,
@@ -386,7 +386,7 @@
       {
         "id": "pa5-2",
         "date": "2026-04-20",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "解決済み",
         "phase": "hearing",
         "isAction": true,
@@ -398,7 +398,7 @@
       {
         "id": "pa5-3",
         "date": "2026-05-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "proposal",
         "isAction": true,
@@ -410,7 +410,7 @@
       {
         "id": "pa5-4",
         "date": "2026-05-01",
-        "kind": "ToDo候補",
+        "kind": "Todo",
         "status": "未解決",
         "phase": "proposal",
         "isAction": true,

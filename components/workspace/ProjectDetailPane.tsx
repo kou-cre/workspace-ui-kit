@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, type CSSProperties, type ReactNode } from "react";
-import { Check, ChevronDown, GripVertical, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, GripVertical, Plus, Trash2, User, UserPlus, X } from "lucide-react";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -11,10 +11,12 @@ import {
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
-import { type Project, type StatusKey, type Note, type Milestone, COMPLETED_STATUS } from "@/lib/schema";
+import { type Project, type PendingInvite, type ProjectMember, type StatusKey, type Note, type Milestone, COMPLETED_STATUS } from "@/lib/schema";
+import { type InviteResult } from "@/lib/actions/projects";
 import { getMilestoneBadgeVariant } from "@/lib/labels";
 import { getDaysLabel } from "@/lib/computed/profile";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,15 +24,151 @@ import {
   Collapsible,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DeleteConfirmDialog } from "@/components/workspace/DeleteConfirmDialog";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  InlineComboboxField,
-  type ComboOption,
-} from "@/components/primitives/InlineComboboxField";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { type ComboOption } from "@/components/primitives/InlineComboboxField";
+import { InlineMultiComboboxField } from "@/components/primitives/InlineMultiComboboxField";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { InlineSelectField } from "@/components/primitives/InlineSelectField";
+import { InlineTextareaField } from "@/components/primitives/InlineTextareaField";
 import { InlineTextField } from "@/components/primitives/InlineTextField";
+
+// ===== InviteMemberDialog =====
+
+function InviteMemberDialog({
+  open,
+  onOpenChange,
+  onInvite,
+  pastMemberOptions,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onInvite: (email: string) => Promise<InviteResult>;
+  pastMemberOptions: { label: string; email: string }[];
+}) {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+
+  const reset = () => { setEmail(""); setError(null); setPendingEmail(null); };
+
+  const handleSubmit = async () => {
+    if (!email.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    const result = await onInvite(email.trim());
+    setLoading(false);
+    if (result.ok) {
+      if ("pending" in result && result.pending) {
+        setPendingEmail(result.email);
+        setEmail("");
+      } else {
+        reset();
+        onOpenChange(false);
+      }
+    } else {
+      setError(
+        result.error === "already_member" ? "すでにメンバーです"
+        : result.error === "already_invited" ? "すでに招待済みです"
+        : "招待に失敗しました",
+      );
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(newOpen) => { if (!loading) { reset(); onOpenChange(newOpen); } }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>メンバーを招待</DialogTitle>
+          <DialogDescription>Googleアカウントのメールアドレスを入力してください</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-3">
+          {pendingEmail && (
+            <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{pendingEmail}</span> に招待を送りました。そのアドレスで初回ログイン時に自動的にメンバーになります。
+            </p>
+          )}
+          {pastMemberOptions.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs text-muted-foreground">過去のメンバーから選ぶ</p>
+              <Select
+                value=""
+                onValueChange={(val) => {
+                  if (val) { setEmail(val); setError(null); }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="メンバーを選択..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {pastMemberOptions.map((opt) => (
+                    <SelectItem key={opt.email} value={opt.email}>
+                      {opt.label}
+                      {opt.label !== opt.email && (
+                        <span className="ml-1 text-muted-foreground">{opt.email}</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="flex flex-col gap-1.5">
+            {pastMemberOptions.length > 0 && (
+              <p className="text-xs text-muted-foreground">またはメールアドレスを直接入力</p>
+            )}
+            <Input
+              type="email"
+              placeholder="example@gmail.com"
+              value={email}
+              disabled={loading}
+              autoFocus={pastMemberOptions.length === 0}
+              onChange={(e) => { setEmail(e.target.value); setError(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) handleSubmit(); }}
+            />
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+        <DialogFooter>
+          <Button
+            variant="ghost"
+            disabled={loading}
+            onClick={() => { reset(); onOpenChange(false); }}
+          >
+            閉じる
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading || !email.trim()}>
+            {loading ? "招待中..." : "招待する"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ===== MilestoneDropZone =====
 
@@ -85,12 +223,15 @@ type SortableActionRowProps = {
   editingActionId: string | null;
   editingText: string;
   subtaskInputs: Record<string, string>;
+  userNames: string[];
   onToggle: () => void;
+  onSelectNote: () => void;
   onStartEdit: () => void;
   onEditChange: (v: string) => void;
   onCommitEdit: () => void;
   onCancelEdit: () => void;
   onDelete: () => void;
+  onUpdateAssignee: (assignee: string) => void;
   onToggleSubtaskInput: () => void;
   onSubtaskInputChange: (v: string) => void;
   onAddSubtask: (text: string) => void;
@@ -104,12 +245,15 @@ function SortableActionRow({
   editingActionId,
   editingText,
   subtaskInputs,
+  userNames,
   onToggle,
+  onSelectNote,
   onStartEdit,
   onEditChange,
   onCommitEdit,
   onCancelEdit,
   onDelete,
+  onUpdateAssignee,
   onToggleSubtaskInput,
   onSubtaskInputChange,
   onAddSubtask,
@@ -118,7 +262,7 @@ function SortableActionRow({
 }: SortableActionRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver, index: myIndex, activeIndex } = useSortable({
     id: action.id,
-    data: { type: "action", milestoneId, label: action.text || "タスク" },
+    data: { type: "action", milestoneId, label: action.title || action.text || "タスク" },
   });
 
   const style: CSSProperties = {
@@ -177,20 +321,20 @@ function SortableActionRow({
           <span
             role="button"
             tabIndex={0}
-            onClick={onStartEdit}
+            onClick={onSelectNote}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") onStartEdit();
+              if (e.key === "Enter" || e.key === " ") onSelectNote();
             }}
             className={cn(
-              "flex-1 cursor-text rounded px-0.5 text-sm leading-relaxed hover:bg-accent/50",
+              "flex-1 cursor-pointer rounded px-0.5 text-sm leading-relaxed hover:bg-accent/50",
               action.done && "text-muted-foreground line-through",
             )}
           >
-            {action.text}
+            {action.title || action.text}
           </span>
         )}
 
-        {!action.done && action.date && (() => {
+        {!action.done && action.date && action.kind !== "アイデア" && (() => {
           const label = getDaysLabel(action.date);
           if (!label) return null;
           const isOverdue = label.includes("超過");
@@ -207,6 +351,46 @@ function SortableActionRow({
             </span>
           );
         })()}
+
+        {/* 担当者 */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={cn(
+              "flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] transition-colors outline-none",
+              action.assignee
+                ? "bg-muted text-foreground hover:bg-accent"
+                : "text-muted-foreground opacity-0 hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100",
+            )}
+            aria-label="担当者を設定"
+          >
+            <User className="size-3 shrink-0" />
+            {action.assignee || "担当"}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-36">
+            <DropdownMenuGroup>
+              {userNames.map((u) => (
+                <DropdownMenuItem
+                  key={u}
+                  onClick={() => onUpdateAssignee(u)}
+                  className={cn("text-xs", action.assignee === u && "font-medium")}
+                >
+                  {u}
+                </DropdownMenuItem>
+              ))}
+              {action.assignee && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onUpdateAssignee("")}
+                    className="text-xs text-muted-foreground"
+                  >
+                    未設定に戻す
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button
           variant="ghost"
@@ -349,18 +533,28 @@ function SortableMilestoneWrapper({
 type ProjectDetailPaneProps = {
   project: Project;
   allClientOptions: ComboOption[];
+  allArchivedClientOptions: ComboOption[];
+  currentUserName: string;
+  currentUserImage?: string | null;
   selectedMilestoneId: string | null;
   onSelectMilestone: (id: string) => void;
-  onRenameProject: (name: string) => void;
+  onUpdateProjectName: (name: string) => void;
+  onUpdateProjectDescription: (description: string) => void;
   onUpdateProjectStatus: (status: StatusKey) => void;
   onUpdateClients: (clients: string[]) => void;
+  onInviteCollaborator: (email: string) => Promise<InviteResult>;
+  onRemoveCollaborator: (userId: string) => void;
+  onRemovePendingInvite: (email: string) => void;
+  pastMemberOptions: { label: string; email: string }[];
   onAddMilestone: (id: string, label: string) => void;
   onUpdateMilestone: (id: string, label: string) => void;
   onDeleteMilestone: (id: string) => void;
+  onSelectNote: (noteId: string) => void;
   onToggleAction: (noteId: string) => void;
   onAddAction: (phase: StatusKey, text: string) => void;
   onDeleteAction: (noteId: string) => void;
   onUpdateAction: (noteId: string, text: string) => void;
+  onUpdateActionAssignee: (noteId: string, assignee: string) => void;
   onAddSubtask: (noteId: string, text: string) => void;
   onToggleSubtask: (noteId: string, subtaskId: string) => void;
   onDeleteSubtask: (noteId: string, subtaskId: string) => void;
@@ -369,11 +563,19 @@ type ProjectDetailPaneProps = {
 export function ProjectDetailPane({
   project,
   allClientOptions,
+  allArchivedClientOptions,
+  currentUserName,
   selectedMilestoneId,
   onSelectMilestone,
-  onRenameProject,
+  onUpdateProjectName,
+  onUpdateProjectDescription,
   onUpdateProjectStatus,
   onUpdateClients,
+  onInviteCollaborator,
+  onRemoveCollaborator,
+  onRemovePendingInvite,
+  pastMemberOptions,
+  onSelectNote,
   onAddMilestone,
   onUpdateMilestone,
   onDeleteMilestone,
@@ -381,10 +583,18 @@ export function ProjectDetailPane({
   onAddAction,
   onDeleteAction,
   onUpdateAction,
+  onUpdateActionAssignee,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
 }: ProjectDetailPaneProps) {
+  const allMemberNames = [
+    currentUserName,
+    ...(project.projectMembers ?? [])
+      .map((m) => m.name)
+      .filter((n): n is string => !!n && n !== currentUserName),
+  ];
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [openMilestones, setOpenMilestones] = useState<Set<string>>(
     new Set([project.status]),
   );
@@ -401,6 +611,7 @@ export function ProjectDetailPane({
 
   const [msCtxMenu, setMsCtxMenu] = useState<{ id: string; label: string; x: number; y: number } | null>(null);
   const msCtxRef = useRef<HTMLDivElement>(null);
+  const actionInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const [deletingMilestone, setDeletingMilestone] = useState<{ id: string; label: string } | null>(null);
 
@@ -434,6 +645,7 @@ export function ProjectDetailPane({
     if (!trimmed) return;
     onAddAction(milestoneId, trimmed);
     setNewActionTexts((prev) => ({ ...prev, [milestoneId]: "" }));
+    actionInputRefs.current[milestoneId]?.focus();
   };
 
   const startEdit = (actionId: string, currentText: string) => {
@@ -508,79 +720,112 @@ export function ProjectDetailPane({
   };
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col border-r border-border bg-canvas">
+    <div className="flex min-w-0 min-h-0 flex-1 flex-col border-r border-border bg-canvas">
       {/* プロジェクトヘッダー */}
       <div className="flex flex-col gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-0 flex-col gap-1.5">
           <p className="text-xs text-muted-foreground">プロジェクト名</p>
           <InlineTextField
             value={project.name}
-            onSave={onRenameProject}
+            onSave={onUpdateProjectName}
             ariaLabel="プロジェクト名"
-            className="font-semibold"
+            placeholder="無題のプロジェクト"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5 text-sm">
+          <p className="text-xs text-muted-foreground">概要</p>
+          <InlineTextareaField
+            value={project.description ?? ""}
+            onSave={onUpdateProjectDescription}
+            ariaLabel="プロジェクト概要"
+            placeholder="プロジェクトの概要を入力..."
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5 text-sm">
+          <p className="text-xs text-muted-foreground">クライアント</p>
+          <InlineMultiComboboxField
+            values={project.clients}
+            options={allClientOptions}
+            archivedOptions={allArchivedClientOptions}
+            onSave={onUpdateClients}
+            ariaLabel="クライアントを選択または追加"
+            placeholder="クライアントを選択または追加..."
           />
         </div>
 
         <div className="flex flex-col gap-1.5 text-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">クライアント</p>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => onUpdateClients([...project.clients, ""])}
-              aria-label="クライアントを追加"
-              className="size-5 shrink-0 text-muted-foreground hover:text-foreground"
+            <p className="text-xs text-muted-foreground">メンバー</p>
+            <button
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Plus />
-            </Button>
+              <UserPlus className="size-3" />
+              招待
+            </button>
           </div>
-          <div className="flex flex-col gap-1">
-            {project.clients.length === 0 ? (
-              <InlineComboboxField
-                value=""
-                options={allClientOptions}
-                onSave={(v) => onUpdateClients(v ? [v] : [])}
-                onCreate={() => {}}
-                ariaLabel="クライアントを選択または追加"
-                placeholder="クライアントを選択または追加..."
-                searchPlaceholder="クライアントを検索または入力..."
-              />
-            ) : (
-              project.clients.map((client, idx) => (
-                <div key={idx} className="flex items-center gap-1">
+          {((project.projectMembers ?? []).length > 0 || (project.pendingInvites ?? []).length > 0) ? (
+            <div className="flex flex-col gap-1.5">
+              {(project.projectMembers ?? []).map((member) => (
+                <div key={member.userId} className="group flex items-center gap-2">
+                  <Avatar size="sm">
+                    <AvatarImage src={member.image ?? undefined} />
+                    <AvatarFallback>
+                      {(member.name ?? member.email ?? "?").slice(0, 1).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0 flex-1">
-                    <InlineComboboxField
-                      value={client}
-                      options={allClientOptions.filter(
-                        (o) =>
-                          o.value === client || !project.clients.includes(o.value),
-                      )}
-                      onSave={(v) => {
-                        const next = [...project.clients];
-                        next[idx] = v;
-                        onUpdateClients(next.filter(Boolean));
-                      }}
-                      onCreate={() => {}}
-                      ariaLabel={`クライアント ${idx + 1}`}
-                      placeholder="クライアントを選択または追加..."
-                      searchPlaceholder="クライアントを検索または入力..."
-                    />
+                    <p className="truncate text-sm">{member.name ?? member.email ?? "不明"}</p>
+                    {member.name && member.email && (
+                      <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() =>
-                      onUpdateClients(project.clients.filter((_, i) => i !== idx))
-                    }
-                    aria-label="クライアントを削除"
-                    className="size-6 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => onRemoveCollaborator(member.userId)}
+                    aria-label="メンバーを削除"
+                    className="size-6 shrink-0 text-muted-foreground opacity-0 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
                   >
                     <X />
                   </Button>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+              {(project.pendingInvites ?? []).map((inv) => (
+                <div key={inv.id} className="group flex items-center gap-2">
+                  <Avatar size="sm">
+                    <AvatarFallback className="text-muted-foreground">?</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-muted-foreground">{inv.email}</p>
+                  </div>
+                  <Badge variant="outline" size="xs" className="shrink-0 text-muted-foreground">
+                    招待中
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => onRemovePendingInvite(inv.email)}
+                    aria-label="招待を取り消す"
+                    className="size-6 shrink-0 text-muted-foreground opacity-0 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                  >
+                    <X />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground/60">メンバーなし</p>
+          )}
+          <InviteMemberDialog
+            open={inviteOpen}
+            onOpenChange={setInviteOpen}
+            onInvite={onInviteCollaborator}
+            pastMemberOptions={pastMemberOptions}
+          />
         </div>
 
         <div className="flex flex-col gap-1.5 text-sm">
@@ -617,7 +862,7 @@ export function ProjectDetailPane({
       )}
 
       {/* マイルストーン縦並びアコーディオン */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col px-4 py-3">
           <SortableContext
             items={milestones.map((m) => m.id)}
@@ -730,18 +975,42 @@ export function ProjectDetailPane({
                         </span>
                       )}
 
-                      {milestone.dueDate && (() => {
+                      {milestone.dueDate && !isCompleted && (() => {
                         const label = getDaysLabel(milestone.dueDate!);
                         if (!label) return null;
                         const overdue = label.includes("超過");
                         const today = label === "今日";
+                        const soonMatch = label.match(/あと (\d+) 日/);
+                        const soon = soonMatch ? Number(soonMatch[1]) <= 7 : false;
+                        if (overdue || today) {
+                          return (
+                            <Badge
+                              variant="destructive"
+                              size="xs"
+                              className="shrink-0 gap-0.5"
+                              title={milestone.dueDate!}
+                            >
+                              <AlertTriangle className="size-2.5" />
+                              {label}
+                            </Badge>
+                          );
+                        }
+                        if (soon) {
+                          return (
+                            <Badge
+                              variant="outline"
+                              size="xs"
+                              className="shrink-0 gap-0.5 border-primary/60 text-primary"
+                              title={milestone.dueDate!}
+                            >
+                              {label}
+                            </Badge>
+                          );
+                        }
                         return (
                           <span
                             title={milestone.dueDate!}
-                            className={cn(
-                              "shrink-0 text-[11px] tabular-nums",
-                              overdue ? "text-destructive" : today ? "font-medium text-primary" : "text-muted-foreground",
-                            )}
+                            className="shrink-0 text-[11px] tabular-nums text-muted-foreground"
                           >
                             {label}
                           </span>
@@ -801,12 +1070,15 @@ export function ProjectDetailPane({
                                 editingActionId={editingActionId}
                                 editingText={editingText}
                                 subtaskInputs={subtaskInputs}
+                                userNames={allMemberNames}
                                 onToggle={() => onToggleAction(action.id)}
-                                onStartEdit={() => startEdit(action.id, action.text)}
+                                onSelectNote={() => onSelectNote(action.id)}
+                                onStartEdit={() => startEdit(action.id, action.title || action.text)}
                                 onEditChange={setEditingText}
                                 onCommitEdit={() => commitEdit(action.id)}
                                 onCancelEdit={cancelEdit}
                                 onDelete={() => onDeleteAction(action.id)}
+                                onUpdateAssignee={(assignee) => onUpdateActionAssignee(action.id, assignee)}
                                 onToggleSubtaskInput={() =>
                                   setSubtaskInputs((prev) =>
                                     prev[action.id] !== undefined
@@ -841,7 +1113,7 @@ export function ProjectDetailPane({
                         {/* アクション追加 */}
                         <div className="flex gap-2 pt-1">
                           <Input
-                            key={actions.length}
+                            ref={(el) => { actionInputRefs.current[milestone.id] = el; }}
                             value={getNewActionText(milestone.id)}
                             onChange={(e) =>
                               setNewActionTexts((prev) => ({
