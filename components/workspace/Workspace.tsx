@@ -661,7 +661,12 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
       const note = project?.notes.find((n) => n.id === noteId);
       if (!note) return;
       const date = note.date;
-      const overrideDuration = targetZone === "timeline" ? DEFAULT_TIMELINE_DURATION : 0;
+      const overrideDuration =
+        targetZone === "timeline"
+          ? note.duration > 0
+            ? note.duration
+            : DEFAULT_TIMELINE_DURATION
+          : 0;
       const overrideTime =
         targetZone === "unassigned"
           ? ""
