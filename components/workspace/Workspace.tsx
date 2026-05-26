@@ -1593,6 +1593,9 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
                     onSelectNote={selectCalendarNote}
                     onToggle={toggleCalendarTodo}
                     onResize={updateNoteTimeAndDuration}
+                    onMoveToUnassigned={(noteId, projectId) =>
+                      moveBetweenZones(noteId, projectId, "unassigned")
+                    }
                   />
 
                   <DragOverlay dropAnimation={null}>
@@ -1833,6 +1836,9 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
                         onSelectNote={selectCalendarNote}
                         onToggle={toggleCalendarTodo}
                         onResize={updateNoteTimeAndDuration}
+                        onMoveToUnassigned={(noteId, projectId) =>
+                          moveBetweenZones(noteId, projectId, "unassigned")
+                        }
                       />
                     )}
                   </div>

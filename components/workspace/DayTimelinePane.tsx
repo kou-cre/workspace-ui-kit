@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Clock } from "lucide-react";
+import { AlertTriangle, Clock, X } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
@@ -53,6 +54,8 @@ type Props = {
   onToggle: (noteId: string, projectId: string) => void;
   /** リサイズ・移動確定時。time=null なら time は変更しない（下端=duration のみ）。 */
   onResize: (noteId: string, projectId: string, time: string | null, duration: number) => void;
+  /** タイムラインから外して未割当に戻す。 */
+  onMoveToUnassigned: (noteId: string, projectId: string) => void;
 };
 
 export function DayTimelinePane({
@@ -64,6 +67,7 @@ export function DayTimelinePane({
   onSelectNote,
   onToggle,
   onResize,
+  onMoveToUnassigned,
 }: Props) {
   // 現在時刻を 1 分ごとに更新
   const [now, setNow] = useState<number>(() => nowMinutes());
@@ -210,6 +214,7 @@ export function DayTimelinePane({
                 onResize={(time, duration) =>
                   onResize(todo.id, todo.projectId, time, duration)
                 }
+                onMoveToUnassigned={() => onMoveToUnassigned(todo.id, todo.projectId)}
               />
             );
           })}
@@ -249,6 +254,7 @@ function TimelineBlock({
   onToggle,
   onSelect,
   onResize,
+  onMoveToUnassigned,
 }: {
   entry: TimelineEntry;
   todo: CalendarTodo;
@@ -256,6 +262,7 @@ function TimelineBlock({
   onToggle: () => void;
   onSelect: () => void;
   onResize: (time: string | null, duration: number) => void;
+  onMoveToUnassigned: () => void;
 }) {
   const done = isDone(todo);
 
@@ -334,7 +341,7 @@ function TimelineBlock({
       }}
       onPointerDown={beginPointerOp("move")}
       className={cn(
-        "absolute z-10 flex cursor-grab flex-col gap-0.5 overflow-hidden rounded-md border border-border bg-card px-2 py-1 text-left transition-colors hover:border-primary/40 active:cursor-grabbing",
+        "group/timeline-block absolute z-10 flex cursor-grab flex-col gap-0.5 overflow-hidden rounded-md border border-border bg-card px-2 py-1 text-left transition-colors hover:border-primary/40 active:cursor-grabbing",
         isSelected && "ring-2 ring-primary",
         entry.beforeNow && "opacity-60",
         done && "opacity-60",
@@ -353,6 +360,21 @@ function TimelineBlock({
         className="absolute inset-x-0 top-0 z-10 h-1.5 cursor-ns-resize touch-none rounded-t-md hover:bg-primary/30"
         aria-label="開始時刻をドラッグして変更"
       />
+
+      {/* 未割当に戻すボタン（hover 時のみ表示） */}
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        aria-label="タイムラインから外して未割当に戻す"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onMoveToUnassigned();
+        }}
+        className="absolute right-0.5 top-0.5 z-20 size-5 opacity-0 transition-opacity group-hover/timeline-block:opacity-100 focus-visible:opacity-100"
+      >
+        <X />
+      </Button>
 
       <div className="flex items-center gap-1 text-[10px] tabular-nums text-muted-foreground">
         <span>{formatHHMM(startMin)}</span>
