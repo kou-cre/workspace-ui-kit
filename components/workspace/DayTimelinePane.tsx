@@ -260,11 +260,13 @@ function TimelineBlock({
   const done = isDone(todo);
 
   /** リサイズ・移動中の楽観表示。 */
-  const [drag, setDrag] = useState<{
+  const [drag, setDragState] = useState<{
     startMin: number;
     duration: number;
     kind: "move" | "top" | "bottom";
   } | null>(null);
+  // ref で最新値を保持して pointer event ハンドラ（stale closure）から読める
+  const dragRef = useRef(drag);
 
   const startMin = drag ? drag.startMin : entry.startMin;
   const duration = drag ? drag.duration : Math.max(TIMELINE_SNAP_MINUTES, todo.duration);
@@ -276,6 +278,11 @@ function TimelineBlock({
     const startY = e.clientY;
     const initialStartMin = entry.startMin;
     const initialDuration = Math.max(TIMELINE_SNAP_MINUTES, todo.duration);
+
+    const setDrag = (val: typeof drag) => {
+      dragRef.current = val;
+      setDragState(val);
+    };
 
     const onMove = (ev: PointerEvent) => {
       const deltaY = ev.clientY - startY;
@@ -295,17 +302,19 @@ function TimelineBlock({
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      setDrag((curr) => {
-        if (curr) {
-          if (curr.kind === "bottom") {
-            onResize(null, curr.duration);
-          } else {
-            // move / top どちらも time を書き換える
-            onResize(formatHHMM(curr.startMin), curr.duration);
-          }
+      // ref から現在値を読み、state リセットと onResize を同じ同期ハンドラ内で呼ぶ。
+      // React 18 の自動バッチにより 1 回の render にまとまり、瞬間的な戻りが消える。
+      const curr = dragRef.current;
+      dragRef.current = null;
+      setDragState(null);
+      if (curr) {
+        if (curr.kind === "bottom") {
+          onResize(null, curr.duration);
+        } else {
+          // move / top どちらも time を書き換える
+          onResize(formatHHMM(curr.startMin), curr.duration);
         }
-        return null;
-      });
+      }
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
