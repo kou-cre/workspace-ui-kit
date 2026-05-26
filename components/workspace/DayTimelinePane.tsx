@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Clock, X } from "lucide-react";
-import { useDroppable } from "@dnd-kit/core";
+import { AlertTriangle, Clock, GripVertical, X } from "lucide-react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -266,6 +266,12 @@ function TimelineBlock({
 }) {
   const done = isDone(todo);
 
+  /** dnd-kit ドラッグ（横方向: 未割当ペインへ移動）。縦移動とは別ルート。 */
+  const draggable = useDraggable({
+    id: `timeline-${todo.id}`,
+    data: { type: "timeline-task", noteId: todo.id, projectId: todo.projectId },
+  });
+
   /** リサイズ・移動中の楽観表示。 */
   const [drag, setDragState] = useState<{
     startMin: number;
@@ -333,6 +339,7 @@ function TimelineBlock({
 
   return (
     <div
+      ref={draggable.setNodeRef}
       role="button"
       tabIndex={0}
       onClick={(e) => {
@@ -346,6 +353,7 @@ function TimelineBlock({
         entry.beforeNow && "opacity-60",
         done && "opacity-60",
         drag && "z-30 cursor-grabbing shadow-lg ring-1 ring-primary/40",
+        draggable.isDragging && "opacity-30",
       )}
       style={{
         top: startMin * PIXELS_PER_MINUTE,
@@ -360,6 +368,21 @@ function TimelineBlock({
         className="absolute inset-x-0 top-0 z-10 h-1.5 cursor-ns-resize touch-none rounded-t-md hover:bg-primary/30"
         aria-label="開始時刻をドラッグして変更"
       />
+
+      {/* 未割当ペインへドラッグするためのハンドル（hover 時のみ表示） */}
+      <div
+        {...draggable.attributes}
+        {...draggable.listeners}
+        onPointerDown={(e) => {
+          // 親の縦移動ハンドラを止めて dnd-kit に渡す
+          e.stopPropagation();
+          draggable.listeners?.onPointerDown?.(e);
+        }}
+        className="absolute left-0 top-0 z-20 flex h-full w-3 cursor-grab touch-none items-center justify-center opacity-0 transition-opacity group-hover/timeline-block:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
+        aria-label="ドラッグして未割当に戻す"
+      >
+        <GripVertical className="size-3 text-muted-foreground" />
+      </div>
 
       {/* 未割当に戻すボタン（hover 時のみ表示） */}
       <Button
