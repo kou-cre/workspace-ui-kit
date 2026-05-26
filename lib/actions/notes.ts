@@ -15,6 +15,7 @@ type NoteInput = {
   date: string;
   endDate?: string;
   time?: string;
+  duration?: number;
   kind: string;
   status: string;
   phase?: string | null;
@@ -38,6 +39,7 @@ export async function createNote(projectId: string, note: NoteInput) {
       date: note.date,
       endDate: note.endDate ?? "",
       time: note.time ?? "",
+      duration: note.duration ?? 0,
       kind: note.kind,
       status: note.status,
       phase: note.phase ?? null,
@@ -74,7 +76,7 @@ export async function createNote(projectId: string, note: NoteInput) {
 export async function updateNote(
   id: string,
   field: string,
-  value: string | boolean | null,
+  value: string | number | boolean | null,
 ) {
   await db.note.update({ where: { id }, data: { [field]: value } });
 
@@ -123,6 +125,20 @@ export async function reorderNotes(projectId: string, phase: string | null, orde
   await db.$transaction(
     orderedIds.map((id, i) =>
       db.note.update({ where: { id }, data: { order: i } }),
+    ),
+  );
+  revalidatePath("/");
+}
+
+/**
+ * 日付スコープでタスクの並びを更新する。複数プロジェクトを横断するマイタスクのタイムライン用。
+ * - 各 id の order を 0..N で書き換える
+ * - 別日付のタスクをドラッグしてきた場合に対応するため、date も更新する
+ */
+export async function reorderTimelineNotes(date: string, orderedIds: string[]) {
+  await db.$transaction(
+    orderedIds.map((id, i) =>
+      db.note.update({ where: { id }, data: { order: i, date } }),
     ),
   );
   revalidatePath("/");

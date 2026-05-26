@@ -5,6 +5,7 @@ import { auth, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import { projectsSchema, workspaceSchema, type GoogleCalendarEvent } from "@/lib/schema";
 import { fetchGoogleCalendarEvents } from "@/lib/google-calendar";
+import { getUserSetting } from "@/lib/actions/userSetting";
 
 export default async function Page() {
   const session = await auth();
@@ -80,6 +81,8 @@ export default async function Page() {
     image: session.user?.image ?? null,
   };
 
+  const userSetting = await getUserSetting();
+
   const handleSignOut = async () => {
     "use server";
     await signOut({ redirectTo: "/login" });
@@ -92,6 +95,7 @@ export default async function Page() {
       user={user}
       onSignOut={handleSignOut}
       googleCalendarEvents={googleCalendarEvents}
+      initialUserSetting={userSetting}
     />
   );
 }

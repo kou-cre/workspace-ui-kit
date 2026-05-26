@@ -41,6 +41,7 @@ import {
   type NoteStatus,
   type Milestone,
   type GoogleCalendarEvent,
+  type UserSetting,
 } from "@/lib/schema";
 import { type ComboOption } from "@/components/primitives/InlineComboboxField";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -52,7 +53,6 @@ import { ProjectDetailPane } from "@/components/workspace/ProjectDetailPane";
 import { NoteListPane } from "@/components/workspace/NoteListPane";
 import { NoteDetailPane } from "@/components/workspace/NoteDetailPane";
 import { CalendarPane } from "@/components/workspace/CalendarPane";
-import { DayTodoPane } from "@/components/workspace/DayTodoPane";
 import { ProjectSummaryPane } from "@/components/workspace/ProjectSummaryPane";
 import { type CalendarTodo, PERSONAL_PROJECT_ID } from "@/lib/schema";
 import { nanoid } from "nanoid";
@@ -78,6 +78,7 @@ import {
   updateNote as updateNoteAction,
   deleteNote as deleteNoteAction,
   reorderNotes as reorderNotesAction,
+  reorderTimelineNotes as reorderTimelineNotesAction,
   createSubtask as createSubtaskAction,
   updateSubtask as updateSubtaskAction,
   deleteSubtask as deleteSubtaskAction,
@@ -86,6 +87,10 @@ import {
   createNoteFolder as createNoteFolderAction,
   updateNoteFolder as updateNoteFolderAction,
 } from "@/lib/actions/folders";
+import { updateWorkStartTime as updateWorkStartTimeAction } from "@/lib/actions/userSetting";
+import { UnassignedTaskPane } from "@/components/workspace/UnassignedTaskPane";
+import { DayTimelinePane } from "@/components/workspace/DayTimelinePane";
+import { DEFAULT_TIMELINE_DURATION, DEFAULT_WORK_START_TIME } from "@/lib/schema";
 
 const todayLocalDate = () => {
   const d = new Date();
@@ -163,10 +168,19 @@ type WorkspaceProps = {
   user?: SessionUser;
   onSignOut?: () => Promise<void>;
   googleCalendarEvents?: GoogleCalendarEvent[];
+  initialUserSetting?: UserSetting;
 };
 
-export function Workspace({ initialProjects, workspace, user, onSignOut, googleCalendarEvents = [] }: WorkspaceProps) {
+export function Workspace({ initialProjects, workspace, user, onSignOut, googleCalendarEvents = [], initialUserSetting }: WorkspaceProps) {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [workStartTime, setWorkStartTime] = useState<string>(
+    initialUserSetting?.workStartTime ?? DEFAULT_WORK_START_TIME,
+  );
+
+  const handleWorkStartTimeChange = useCallback((time: string) => {
+    setWorkStartTime(time);
+    updateWorkStartTimeAction(time).catch(console.error);
+  }, []);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
     initialProjects.find(p => p.id !== PERSONAL_PROJECT_ID)?.id ?? initialProjects[0]?.id ?? "",
   );
@@ -203,6 +217,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
   const [mobileDetailProjectId, setMobileDetailProjectId] = useState<string | null>(null);
   const [mobileProjectSubTab, setMobileProjectSubTab] = useState<"actions" | "notes">("actions");
   const [mobileNoteView, setMobileNoteView] = useState(false);
+  const [mobilePersonalSubTab, setMobilePersonalSubTab] = useState<"unassigned" | "timeline">("unassigned");
 
   // 個人ダッシュボード
   const [selectedView, setSelectedView] = useState<"personal" | null>(null);
@@ -251,6 +266,22 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
   const dayTodos = useMemo(
     () => calendarTodos.filter(t => t.date === selectedCalendarDate),
     [calendarTodos, selectedCalendarDate],
+  );
+
+  const dayUnassignedTodos = useMemo(
+    () =>
+      dayTodos
+        .filter((t) => (t.duration ?? 0) <= 0)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    [dayTodos],
+  );
+
+  const dayTimelineTodos = useMemo(
+    () =>
+      dayTodos
+        .filter((t) => (t.duration ?? 0) > 0)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    [dayTodos],
   );
 
   const personalActiveNote = useMemo(() => {
@@ -366,6 +397,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
       date,
       endDate: "",
       time: "",
+      duration: 0,
       kind: "Todo",
       status: "未解決",
       phase: null,
@@ -377,6 +409,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
       text: "",
       assignee: "",
       createdBy: "",
+      order: 0,
       googleEventId: null,
     };
     setProjects(prev => prev.map(p =>
@@ -513,6 +546,252 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
       moveTodoDate(todo.id, todo.projectId, targetDate);
     }
   }, [moveTodoDate]);
+
+  // ===== マイタスク（カレンダー + 未割当 + タイムライン）D&D =====
+
+  /**
+   * 同じ projects state 内で、特定 date の note 群を「未割当(duration<=0) → タイムライン(duration>0)」
+   * の順に結合し、新しい order を 0..N で振り直す。projects state を直接ミューテートせず新オブジェクトを返す。
+   *
+   * `moveNoteId` を指定すると、その note を target zone の末尾に移動し（必要なら duration を上書き）、
+   * `swapWithNoteId` を指定すると、その note を swapWithNoteId の位置と入れ替える。
+   */
+  const recomputeDayOrder = useCallback(
+    (
+      currentProjects: Project[],
+      date: string,
+      options: {
+        moveNoteId?: string;
+        targetZone?: "timeline" | "unassigned";
+        overrideDuration?: number;
+        overrideTime?: string;
+        sortableSwap?: { activeId: string; overId: string; zone: "timeline" | "unassigned" };
+      },
+    ): { nextProjects: Project[]; orderedIds: string[] } => {
+      // 当該日付の全 note を 1 列に集める
+      type Tagged = { note: Note; projectId: string };
+      const sameDay: Tagged[] = [];
+      for (const p of currentProjects) {
+        for (const n of p.notes) {
+          if (n.date === date) sameDay.push({ note: n, projectId: p.id });
+        }
+      }
+      // moveNoteId 指定時は当該 note を見つけて duration/time を上書き
+      let movedTag: Tagged | null = null;
+      const others = sameDay.filter((t) => {
+        if (options.moveNoteId && t.note.id === options.moveNoteId) {
+          movedTag = {
+            ...t,
+            note: {
+              ...t.note,
+              duration: options.overrideDuration ?? t.note.duration,
+              time: options.overrideTime ?? t.note.time,
+            },
+          };
+          return false;
+        }
+        return true;
+      });
+      const allDay: Tagged[] = movedTag ? [...others, movedTag] : others;
+      // 未割当 / タイムラインに分割
+      const unassigned = allDay
+        .filter((t) => (t.note.duration ?? 0) <= 0)
+        .sort((a, b) => (a.note.order ?? 0) - (b.note.order ?? 0));
+      const timeline = allDay
+        .filter((t) => (t.note.duration ?? 0) > 0)
+        .sort((a, b) => (a.note.order ?? 0) - (b.note.order ?? 0));
+
+      // sortableSwap 指定があれば、該当 zone 内で入れ替え
+      if (options.sortableSwap) {
+        const zoneList = options.sortableSwap.zone === "timeline" ? timeline : unassigned;
+        const oldIdx = zoneList.findIndex((t) => t.note.id === options.sortableSwap!.activeId);
+        const newIdx = zoneList.findIndex((t) => t.note.id === options.sortableSwap!.overId);
+        if (oldIdx !== -1 && newIdx !== -1) {
+          const moved = arrayMove(zoneList, oldIdx, newIdx);
+          if (options.sortableSwap.zone === "timeline") {
+            timeline.splice(0, timeline.length, ...moved);
+          } else {
+            unassigned.splice(0, unassigned.length, ...moved);
+          }
+        }
+      } else if (movedTag) {
+        // moveNoteId 指定時は target zone の末尾へ
+        const list = options.targetZone === "timeline" ? timeline : unassigned;
+        // movedTag は既に末尾に追加されている（filter + concat の効果）。zone 振り分けで自然に末尾になる
+        // 念のため重複を取り除き末尾に再挿入
+        const idx = list.findIndex((t) => t.note.id === movedTag!.note.id);
+        if (idx !== -1) {
+          list.splice(idx, 1);
+          list.push(movedTag);
+        }
+      }
+
+      const combined: Tagged[] = [...unassigned, ...timeline];
+      const orderedIds = combined.map((t) => t.note.id);
+
+      // projects に書き戻す（同日 note の order/duration/time を更新）
+      const tagByNoteId = new Map<string, Tagged>();
+      combined.forEach((t, i) => {
+        tagByNoteId.set(t.note.id, { ...t, note: { ...t.note, order: i } });
+      });
+      const nextProjects = currentProjects.map((p) => ({
+        ...p,
+        notes: p.notes.map((n) => {
+          const tag = tagByNoteId.get(n.id);
+          if (!tag) return n;
+          return tag.note;
+        }),
+      }));
+
+      return { nextProjects, orderedIds };
+    },
+    [],
+  );
+
+  /** 未割当 ↔ タイムラインの zone 跨ぎ。duration を切り替えて当該 zone の末尾へ。 */
+  const moveBetweenZones = useCallback(
+    (
+      noteId: string,
+      projectId: string,
+      targetZone: "timeline" | "unassigned",
+    ) => {
+      // 現在の note を見つけて date を取得
+      const project = projects.find((p) => p.id === projectId);
+      const note = project?.notes.find((n) => n.id === noteId);
+      if (!note) return;
+      const date = note.date;
+      const overrideDuration = targetZone === "timeline" ? DEFAULT_TIMELINE_DURATION : 0;
+      const overrideTime = targetZone === "unassigned" ? "" : note.time;
+
+      const { nextProjects, orderedIds } = recomputeDayOrder(projects, date, {
+        moveNoteId: noteId,
+        targetZone,
+        overrideDuration,
+        overrideTime,
+      });
+      setProjects(nextProjects);
+
+      updateNoteAction(noteId, "duration", overrideDuration).catch(console.error);
+      if (targetZone === "unassigned") {
+        updateNoteAction(noteId, "time", "").catch(console.error);
+      }
+      reorderTimelineNotesAction(date, orderedIds).catch(console.error);
+    },
+    [projects, recomputeDayOrder],
+  );
+
+  /** 同一 zone 内の並び替え。 */
+  const reorderInZone = useCallback(
+    (zone: "timeline" | "unassigned", activeNoteId: string, overNoteId: string) => {
+      const allNotes = projects.flatMap((p) => p.notes.map((n) => ({ n, projectId: p.id })));
+      const active = allNotes.find(({ n }) => n.id === activeNoteId);
+      if (!active) return;
+      const date = active.n.date;
+
+      const { nextProjects, orderedIds } = recomputeDayOrder(projects, date, {
+        sortableSwap: { activeId: activeNoteId, overId: overNoteId, zone },
+      });
+      setProjects(nextProjects);
+      reorderTimelineNotesAction(date, orderedIds).catch(console.error);
+    },
+    [projects, recomputeDayOrder],
+  );
+
+  /** タイムラインのリサイズで time / duration を更新する。 */
+  const updateNoteTimeAndDuration = useCallback(
+    (noteId: string, projectId: string, time: string | null, duration: number) => {
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id !== projectId
+            ? p
+            : {
+                ...p,
+                notes: p.notes.map((n) =>
+                  n.id !== noteId
+                    ? n
+                    : {
+                        ...n,
+                        time: time ?? n.time,
+                        duration,
+                      },
+                ),
+              },
+        ),
+      );
+      if (time !== null) updateNoteAction(noteId, "time", time).catch(console.error);
+      updateNoteAction(noteId, "duration", duration).catch(console.error);
+    },
+    [],
+  );
+
+  const handleMyTaskDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const data = event.active.data.current as
+        | { type?: string; todo?: CalendarTodo; noteId?: string; projectId?: string }
+        | undefined;
+      if (!data) return;
+      if (data.type === "calendar-todo" && data.todo) {
+        setCalendarActiveDrag(data.todo);
+        return;
+      }
+      if ((data.type === "unassigned-task" || data.type === "timeline-task") && data.noteId && data.projectId) {
+        const todo = calendarTodos.find(
+          (t) => t.id === data.noteId && t.projectId === data.projectId,
+        );
+        if (todo) setCalendarActiveDrag(todo);
+      }
+    },
+    [calendarTodos],
+  );
+
+  const handleMyTaskDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setCalendarActiveDrag(null);
+      const { active, over } = event;
+      if (!over) return;
+      const a = active.data.current as
+        | { type?: string; noteId?: string; projectId?: string; todo?: CalendarTodo }
+        | undefined;
+      const o = over.data.current as { type?: string; dateStr?: string } | undefined;
+      if (!a) return;
+
+      // (1) カレンダーチップ → 日付セル（既存）
+      if (a.type === "calendar-todo" && o?.type === "calendar-day" && o.dateStr && a.todo) {
+        if (a.todo.date !== o.dateStr) {
+          moveTodoDate(a.todo.id, a.todo.projectId, o.dateStr);
+        }
+        return;
+      }
+      // (2) 未割当 → タイムライン
+      if (
+        a.type === "unassigned-task" &&
+        (o?.type === "timeline-zone" || o?.type === "timeline-task") &&
+        a.noteId &&
+        a.projectId
+      ) {
+        moveBetweenZones(a.noteId, a.projectId, "timeline");
+        return;
+      }
+      // (3) タイムライン → 未割当
+      if (a.type === "timeline-task" && o?.type === "unassigned-zone" && a.noteId && a.projectId) {
+        moveBetweenZones(a.noteId, a.projectId, "unassigned");
+        return;
+      }
+      // (4) タイムライン内並び替え
+      if (a.type === "timeline-task" && o?.type === "timeline-task" && a.noteId) {
+        const overId = String(over.id).replace(/^timeline-/, "");
+        if (overId !== a.noteId) reorderInZone("timeline", a.noteId, overId);
+        return;
+      }
+      // (5) 未割当内並び替え
+      if (a.type === "unassigned-task" && o?.type === "unassigned-task" && a.noteId) {
+        const overId = String(over.id).replace(/^unassigned-/, "");
+        if (overId !== a.noteId) reorderInZone("unassigned", a.noteId, overId);
+        return;
+      }
+    },
+    [moveTodoDate, moveBetweenZones, reorderInZone],
+  );
 
   const archiveProject = useCallback((id: string) => {
     setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, archived: true } : p)));
@@ -705,6 +984,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
         date,
         endDate: "",
         time: "",
+        duration: 0,
         kind: "Todo" as NoteKind,
         status: "未解決" as NoteStatus,
         phase,
@@ -716,6 +996,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
         text: "",
         assignee: "",
         createdBy: "",
+        order: 0,
         googleEventId: null,
       };
       updateProjectNotes((notes) => [...notes, newNote]);
@@ -1002,6 +1283,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
         date,
         endDate: "",
         time: "",
+        duration: 0,
         kind,
         status,
         phase,
@@ -1013,6 +1295,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
         text: "",
         assignee: "",
         createdBy: "",
+        order: 0,
         googleEventId: null,
       };
       updateProjectNotes((notes) => [...notes, newNote]);
@@ -1024,7 +1307,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
   );
 
   const updateNote = useCallback(
-    (noteId: string, field: keyof Note, value: string) => {
+    (noteId: string, field: keyof Note, value: string | number) => {
       updateProjectNotes((notes) =>
         notes.map((n) => (n.id === noteId ? { ...n, [field]: value } : n)),
       );
@@ -1245,8 +1528,8 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
                 <DndContext
                   sensors={calendarSensors}
                   collisionDetection={pointerWithin}
-                  onDragStart={handleCalendarDragStart}
-                  onDragEnd={handleCalendarDragEnd}
+                  onDragStart={handleMyTaskDragStart}
+                  onDragEnd={handleMyTaskDragEnd}
                 >
                   {/* Pane 2: 月カレンダー */}
                   <CalendarPane
@@ -1262,14 +1545,26 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
                     googleEvents={googleCalendarEvents}
                   />
 
-                  {/* Pane 3: 選択日の Todo リスト */}
-                  <DayTodoPane
+                  {/* Pane 3: 未割当タスク（duration === 0） */}
+                  <UnassignedTaskPane
                     date={selectedCalendarDate}
-                    todos={dayTodos}
+                    todos={dayUnassignedTodos}
                     selectedNoteId={selectedNoteId}
                     onSelectNote={selectCalendarNote}
                     onToggle={toggleCalendarTodo}
                     onAddPersonalTodo={addPersonalTodo}
+                  />
+
+                  {/* Pane 4: タイムライン（duration > 0） */}
+                  <DayTimelinePane
+                    date={selectedCalendarDate}
+                    todos={dayTimelineTodos}
+                    selectedNoteId={selectedNoteId}
+                    workStartTime={workStartTime}
+                    onWorkStartTimeChange={handleWorkStartTimeChange}
+                    onSelectNote={selectCalendarNote}
+                    onToggle={toggleCalendarTodo}
+                    onResize={updateNoteTimeAndDuration}
                   />
 
                   <DragOverlay dropAnimation={null}>
@@ -1447,13 +1742,13 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
               />
             )}
 
-            {/* マイタスクタブ: カレンダー + 当日リスト */}
+            {/* マイタスクタブ: カレンダー + 未割当/タイムライン subtab */}
             {mobileTab === "personal" && personalTab === "calendar" && (
               <DndContext
                 sensors={calendarSensors}
                 collisionDetection={pointerWithin}
-                onDragStart={handleCalendarDragStart}
-                onDragEnd={handleCalendarDragEnd}
+                onDragStart={handleMyTaskDragStart}
+                onDragEnd={handleMyTaskDragEnd}
               >
                 <div className="flex h-full flex-col">
                   <div className="basis-[432px] shrink-0 flex flex-col">
@@ -1470,15 +1765,48 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
                       googleEvents={googleCalendarEvents}
                     />
                   </div>
+
+                  {/* 未割当 / タイムライン subtab */}
+                  <div className="flex shrink-0 border-b border-border">
+                    {(["unassigned", "timeline"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setMobilePersonalSubTab(tab)}
+                        className={
+                          "flex-1 py-2 text-xs font-medium transition-colors " +
+                          (mobilePersonalSubTab === tab
+                            ? "border-b-2 border-primary text-foreground"
+                            : "text-muted-foreground hover:text-foreground")
+                        }
+                      >
+                        {tab === "unassigned" ? "未割当" : "タイムライン"}
+                      </button>
+                    ))}
+                  </div>
+
                   <div className="flex flex-col flex-1 min-h-0">
-                    <DayTodoPane
-                      date={selectedCalendarDate}
-                      todos={dayTodos}
-                      selectedNoteId={selectedNoteId}
-                      onSelectNote={selectCalendarNote}
-                      onToggle={toggleCalendarTodo}
-                      onAddPersonalTodo={addPersonalTodo}
-                    />
+                    {mobilePersonalSubTab === "unassigned" ? (
+                      <UnassignedTaskPane
+                        date={selectedCalendarDate}
+                        todos={dayUnassignedTodos}
+                        selectedNoteId={selectedNoteId}
+                        onSelectNote={selectCalendarNote}
+                        onToggle={toggleCalendarTodo}
+                        onAddPersonalTodo={addPersonalTodo}
+                      />
+                    ) : (
+                      <DayTimelinePane
+                        date={selectedCalendarDate}
+                        todos={dayTimelineTodos}
+                        selectedNoteId={selectedNoteId}
+                        workStartTime={workStartTime}
+                        onWorkStartTimeChange={handleWorkStartTimeChange}
+                        onSelectNote={selectCalendarNote}
+                        onToggle={toggleCalendarTodo}
+                        onResize={updateNoteTimeAndDuration}
+                      />
+                    )}
                   </div>
                 </div>
                 <DragOverlay dropAnimation={null}>

@@ -26,6 +26,9 @@ export type {
 export { InlineSelectField } from "./InlineSelectField";
 export type { InlineSelectFieldProps } from "./InlineSelectField";
 
+export { InlineDurationField } from "./InlineDurationField";
+export type { InlineDurationFieldProps } from "./InlineDurationField";
+
 export { InlineTextareaField } from "./InlineTextareaField";
 export type { InlineTextareaFieldProps } from "./InlineTextareaField";
 

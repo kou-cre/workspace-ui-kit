@@ -18,6 +18,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { InlineDateField } from "@/components/primitives/InlineDateField";
+import { InlineDurationField } from "@/components/primitives/InlineDurationField";
 import { InlineFieldRow } from "@/components/primitives/InlineFieldRow";
 import { InlineSelectField } from "@/components/primitives/InlineSelectField";
 import { InlineTextField } from "@/components/primitives/InlineTextField";
@@ -36,7 +37,7 @@ type NoteDetailPaneProps = {
   pane4Open: boolean;
   currentUserName: string;
   onTogglePane4: () => void;
-  onUpdateNote: (field: keyof Note, value: string) => void;
+  onUpdateNote: (field: keyof Note, value: string | number) => void;
   onSetNotePhase: (phase: StatusKey | null) => void;
   onDeleteNote: () => void;
   onMoveToPhase: (phase: StatusKey) => void;
@@ -109,6 +110,14 @@ export function NoteDetailPane({
                 onSaveEnd={(v) => onUpdateNote("endDate", v)}
                 timeValue={note.time}
                 onSaveTime={(v) => onUpdateNote("time", v)}
+              />
+            </InlineFieldRow>
+
+            <InlineFieldRow label="所要時間">
+              <InlineDurationField
+                value={note.duration ?? 0}
+                onSave={(v) => onUpdateNote("duration", v)}
+                ariaLabel="所要時間"
               />
             </InlineFieldRow>
 

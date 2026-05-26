@@ -79,6 +79,7 @@ model Note {
   date      String
   endDate   String  @default("")
   time      String  @default("")
+  duration  Int     @default(0)
   kind      String
   status    String
   phase     String?
@@ -119,6 +120,14 @@ model User {
   sessions      Session[]
   projects      Project[]
   memberProjects ProjectMember[]
+  setting       UserSetting?
+}
+
+model UserSetting {
+  userId        String   @id
+  workStartTime String   @default("09:00")
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {

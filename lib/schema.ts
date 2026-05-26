@@ -82,6 +82,7 @@ export const noteSchema = z.object({
   date: z.string(),
   endDate: z.string().default(""),
   time: z.string().default(""),
+  duration: z.number().int().min(0).default(0),
   kind: noteKindSchema,
   status: noteStatusSchema,
   phase: z.string().nullable().default(null),
@@ -93,6 +94,7 @@ export const noteSchema = z.object({
   text: z.string(),
   assignee: z.string().default(""),
   createdBy: z.string().default(""),
+  order: z.number().int().default(0),
   googleEventId: z.string().nullable().default(null),
 });
 export type Note = z.infer<typeof noteSchema>;
@@ -149,3 +151,27 @@ export const PERSONAL_PROJECT_ID = "__personal__";
 
 /** 集計・表示用: カレンダー / 日別 Todo リストのアイテム型。 */
 export type CalendarTodo = Note & { projectId: string; projectName: string };
+
+// ===== タイムライン関連定数 =====
+
+/** タイムラインの始業時刻デフォルト（HH:MM）。 */
+export const DEFAULT_WORK_START_TIME = "09:00";
+
+/** duration プリセット（分単位）。 */
+export const DURATION_PRESETS = [15, 30, 45, 60, 90, 120] as const;
+
+/** 未割当→タイムラインへドロップ時のデフォルト所要時間（分）。 */
+export const DEFAULT_TIMELINE_DURATION = 30;
+
+/** タイムラインのリサイズ・スナップ単位（分）。 */
+export const TIMELINE_SNAP_MINUTES = 15;
+
+// ===== ユーザー設定 =====
+
+export const userSettingSchema = z.object({
+  workStartTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .default(DEFAULT_WORK_START_TIME),
+});
+export type UserSetting = z.infer<typeof userSettingSchema>;
