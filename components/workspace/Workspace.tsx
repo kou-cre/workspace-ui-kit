@@ -1573,17 +1573,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
                     googleEvents={googleCalendarEvents}
                   />
 
-                  {/* Pane 3: 未割当タスク（duration === 0） */}
-                  <UnassignedTaskPane
-                    date={selectedCalendarDate}
-                    todos={dayUnassignedTodos}
-                    selectedNoteId={selectedNoteId}
-                    onSelectNote={selectCalendarNote}
-                    onToggle={toggleCalendarTodo}
-                    onAddPersonalTodo={addPersonalTodo}
-                  />
-
-                  {/* Pane 4: タイムライン（duration > 0） */}
+                  {/* Pane 3: タイムライン（duration > 0） */}
                   <DayTimelinePane
                     date={selectedCalendarDate}
                     todos={dayTimelineTodos}
@@ -1596,6 +1586,16 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
                     onMoveToUnassigned={(noteId, projectId) =>
                       moveBetweenZones(noteId, projectId, "unassigned")
                     }
+                  />
+
+                  {/* Pane 4: 未割当タスク（duration === 0） */}
+                  <UnassignedTaskPane
+                    date={selectedCalendarDate}
+                    todos={dayUnassignedTodos}
+                    selectedNoteId={selectedNoteId}
+                    onSelectNote={selectCalendarNote}
+                    onToggle={toggleCalendarTodo}
+                    onAddPersonalTodo={addPersonalTodo}
                   />
 
                   <DragOverlay dropAnimation={null}>
