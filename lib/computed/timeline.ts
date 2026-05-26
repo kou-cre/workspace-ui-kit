@@ -1,10 +1,10 @@
 /**
  * タイムライン計算ヘルパー（純粋関数）。
  *
- * - 始業時刻 + duration の累積で各タスクの開始/終了時刻を派生
- * - task.time が "HH:MM" なら、その時刻を固定開始時刻として尊重
- * - currentMin が workStartMin より大きい場合、起点を currentMin にオーバーライド
- *   （現在時刻より前にタスクが流れないようにする）
+ * Google カレンダー風の絶対時刻軸 UI 向け：
+ *   - 各タスクは time (HH:MM) と duration を持ち、その時刻に固定配置
+ *   - 重なるタスクはレーンに分けて横並び表示
+ *   - time が空のタスクはタイムラインに表示しない（未割当ペイン側で扱う）
  */
 
 import type { Note } from "@/lib/schema";
@@ -20,6 +20,10 @@ export type TimelineEntry = {
   endTime: string;
   startMin: number;
   endMin: number;
+  /** このタスクが属するレーン番号（0-indexed）。重なりがあると 1 以上。 */
+  lane: number;
+  /** このタスクが属するクラスタの総レーン数。 */
+  laneCount: number;
   overflow: boolean;
   beforeNow: boolean;
 };
@@ -46,39 +50,107 @@ export function snapTo15Minutes(minutes: number): number {
 }
 
 /**
- * 順序＋累積でタイムラインを計算する。
- * - tasks は `order` 昇順 + `duration > 0` 済みであることを呼び元が保証する
- * - task.time が "HH:MM" で、それが現在の cursor より後ろの時刻なら、その時刻に固定（前に空き時間ができる）
- * - currentMin が指定されており workStartMin より大きい場合、cursor の起点を currentMin にする
+ * 重なるタスクをレーンに分割する（greedy アルゴリズム）。
+ *
+ * - タスクを start で sort
+ * - 各タスクについて、空いているレーン（前タスクの end <= 自分の start）を探す
+ * - なければ新レーン
+ * - 同じ「重なりクラスタ」内のタスクは同じ laneCount を共有
+ */
+function assignLanes(
+  entries: Array<{ startMin: number; endMin: number }>,
+): Array<{ lane: number; laneCount: number }> {
+  if (entries.length === 0) return [];
+
+  // index 付きで時刻 sort
+  const indexed = entries.map((e, i) => ({ ...e, i }));
+  indexed.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+
+  const result = entries.map(() => ({ lane: 0, laneCount: 1 }));
+
+  // クラスタ単位で処理: 連続して重なるグループに分け、それぞれ独立にレーン割り当て
+  let clusterStart = 0;
+  let clusterMaxEnd = indexed[0]!.endMin;
+
+  for (let k = 1; k <= indexed.length; k++) {
+    const cur = indexed[k];
+    const isInCluster = cur !== undefined && cur.startMin < clusterMaxEnd;
+    if (!isInCluster || k === indexed.length) {
+      // クラスタ [clusterStart, k) を確定
+      const cluster = indexed.slice(clusterStart, k);
+      const lanes: number[] = []; // lanes[i] = そのレーンの現時点の endMin
+      for (const item of cluster) {
+        // 空いているレーンを探す
+        let assigned = -1;
+        for (let li = 0; li < lanes.length; li++) {
+          if (lanes[li] <= item.startMin) {
+            assigned = li;
+            break;
+          }
+        }
+        if (assigned === -1) {
+          lanes.push(item.endMin);
+          assigned = lanes.length - 1;
+        } else {
+          lanes[assigned] = item.endMin;
+        }
+        result[item.i] = { lane: assigned, laneCount: 0 };
+      }
+      // クラスタの laneCount を確定
+      const laneCount = lanes.length;
+      for (const item of cluster) {
+        result[item.i].laneCount = laneCount;
+      }
+      // 次のクラスタへ
+      if (cur !== undefined) {
+        clusterStart = k;
+        clusterMaxEnd = cur.endMin;
+      }
+    } else {
+      // 同じクラスタ内
+      if (cur.endMin > clusterMaxEnd) clusterMaxEnd = cur.endMin;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * タスク群から、絶対時刻配置のタイムラインエントリを計算する。
+ *
+ * - tasks は time が "HH:MM" 形式のもののみが対象（time が空のものは事前に除外しておく）
+ * - 重なるタスクは横並びレーンで表示
+ * - currentMin が指定されていれば、beforeNow フラグを立てる
  */
 export function computeTimeline(
-  workStartTime: string,
   currentMin: number | null,
   tasks: TimelineTask[],
 ): TimelineEntry[] {
-  const workMin = parseHHMM(workStartTime) ?? 9 * 60;
-  const startCursor =
-    currentMin !== null && currentMin > workMin ? currentMin : workMin;
+  const valid = tasks
+    .map((task) => {
+      const startMin = parseHHMM(task.time);
+      if (startMin === null) return null;
+      const duration = Math.max(0, task.duration);
+      return { task, startMin, endMin: startMin + duration };
+    })
+    .filter((x): x is { task: TimelineTask; startMin: number; endMin: number } => x !== null);
 
-  let cursor = startCursor;
-  const result: TimelineEntry[] = [];
-  for (const task of tasks) {
-    const fixedStart = parseHHMM(task.time);
-    const start =
-      fixedStart !== null && fixedStart > cursor ? fixedStart : cursor;
-    const duration = Math.max(0, task.duration);
-    const end = start + duration;
-    result.push({
-      task,
-      startTime: formatHHMM(start),
-      endTime: formatHHMM(end),
-      startMin: start,
-      endMin: end,
-      overflow: end > 24 * 60,
-      beforeNow: currentMin !== null && start < currentMin,
-    });
-    cursor = end;
-  }
+  const lanes = assignLanes(valid.map((v) => ({ startMin: v.startMin, endMin: v.endMin })));
+
+  const result: TimelineEntry[] = valid.map((v, i) => ({
+    task: v.task,
+    startTime: formatHHMM(v.startMin),
+    endTime: formatHHMM(v.endMin),
+    startMin: v.startMin,
+    endMin: v.endMin,
+    lane: lanes[i]!.lane,
+    laneCount: lanes[i]!.laneCount,
+    overflow: v.endMin > 24 * 60,
+    beforeNow: currentMin !== null && v.startMin < currentMin,
+  }));
+
+  // 表示順は startMin 昇順で
+  result.sort((a, b) => a.startMin - b.startMin || a.lane - b.lane);
   return result;
 }
 

@@ -271,7 +271,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
   const dayUnassignedTodos = useMemo(
     () =>
       dayTodos
-        .filter((t) => (t.duration ?? 0) <= 0)
+        .filter((t) => (t.duration ?? 0) <= 0 || !t.time)
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     [dayTodos],
   );
@@ -279,7 +279,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
   const dayTimelineTodos = useMemo(
     () =>
       dayTodos
-        .filter((t) => (t.duration ?? 0) > 0)
+        .filter((t) => (t.duration ?? 0) > 0 && !!t.time)
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     [dayTodos],
   );
@@ -648,20 +648,24 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
     [],
   );
 
-  /** 未割当 ↔ タイムラインの zone 跨ぎ。duration を切り替えて当該 zone の末尾へ。 */
+  /** 未割当 ↔ タイムラインの zone 跨ぎ。duration / time を切り替えて当該 zone の末尾へ。 */
   const moveBetweenZones = useCallback(
     (
       noteId: string,
       projectId: string,
       targetZone: "timeline" | "unassigned",
+      /** タイムラインへドロップした時刻（HH:MM）。未指定なら 09:00。 */
+      dropTime?: string,
     ) => {
-      // 現在の note を見つけて date を取得
       const project = projects.find((p) => p.id === projectId);
       const note = project?.notes.find((n) => n.id === noteId);
       if (!note) return;
       const date = note.date;
       const overrideDuration = targetZone === "timeline" ? DEFAULT_TIMELINE_DURATION : 0;
-      const overrideTime = targetZone === "unassigned" ? "" : note.time;
+      const overrideTime =
+        targetZone === "unassigned"
+          ? ""
+          : (dropTime ?? (note.time || "09:00"));
 
       const { nextProjects, orderedIds } = recomputeDayOrder(projects, date, {
         moveNoteId: noteId,
@@ -672,9 +676,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
       setProjects(nextProjects);
 
       updateNoteAction(noteId, "duration", overrideDuration).catch(console.error);
-      if (targetZone === "unassigned") {
-        updateNoteAction(noteId, "time", "").catch(console.error);
-      }
+      updateNoteAction(noteId, "time", overrideTime).catch(console.error);
       reorderTimelineNotesAction(date, orderedIds).catch(console.error);
     },
     [projects, recomputeDayOrder],
@@ -769,7 +771,19 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
         a.noteId &&
         a.projectId
       ) {
-        moveBetweenZones(a.noteId, a.projectId, "timeline");
+        // ドロップ位置の Y から時刻を計算（タイムラインゾーンの top を起点に分換算）
+        let dropTime: string | undefined;
+        const aRect = active.rect.current.translated;
+        const oRect = over.rect;
+        if (aRect && oRect) {
+          const yInTimeline = aRect.top - oRect.top;
+          const min = Math.round(yInTimeline / 15) * 15;
+          const clamped = Math.max(0, Math.min(24 * 60 - 15, min));
+          const h = Math.floor(clamped / 60);
+          const m = clamped % 60;
+          dropTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        }
+        moveBetweenZones(a.noteId, a.projectId, "timeline", dropTime);
         return;
       }
       // (3) タイムライン → 未割当
@@ -1309,9 +1323,18 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
   const updateNote = useCallback(
     (noteId: string, field: keyof Note, value: string | number) => {
       updateProjectNotes((notes) =>
-        notes.map((n) => (n.id === noteId ? { ...n, [field]: value } : n)),
+        notes.map((n) => {
+          if (n.id !== noteId) return n;
+          const updated: Note = { ...n, [field]: value };
+          // duration を 0 にしたら time も "" にする（タイムラインから外す = 未割当へ）
+          if (field === "duration" && value === 0) updated.time = "";
+          return updated;
+        }),
       );
       updateNoteAction(noteId, field, value).catch(console.error);
+      if (field === "duration" && value === 0) {
+        updateNoteAction(noteId, "time", "").catch(console.error);
+      }
     },
     [updateProjectNotes],
   );
