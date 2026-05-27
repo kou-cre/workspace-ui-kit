@@ -3,9 +3,13 @@ import { Workspace } from "@/components/workspace/Workspace";
 import workspaceData from "@/data/workspace.json";
 import { auth, signOut } from "@/auth";
 import { db } from "@/lib/db";
-import { projectsSchema, workspaceSchema, type GoogleCalendarEvent } from "@/lib/schema";
+import {
+  projectsSchema,
+  workspaceSchema,
+  DEFAULT_WORK_START_TIME,
+  type GoogleCalendarEvent,
+} from "@/lib/schema";
 import { fetchGoogleCalendarEvents } from "@/lib/google-calendar";
-import { getUserSetting } from "@/lib/actions/userSetting";
 
 export default async function Page() {
   const session = await auth();
@@ -18,25 +22,36 @@ export default async function Page() {
     );
   }
 
-  const rawProjects = await db.project.findMany({
-    where: {
-      OR: [
-        { userId: session.user.id },
-        { projectMembers: { some: { userId: session.user.id } } },
-      ],
-    },
-    include: {
-      milestones: { orderBy: { order: "asc" } },
-      noteFolders: { orderBy: { order: "asc" } },
-      notes: {
-        include: { subtasks: { orderBy: { order: "asc" } } },
-        orderBy: { order: "asc" },
+  const now = new Date();
+  const timeMin = new Date(now.getFullYear(), now.getMonth() - 6, 1).toISOString();
+  const timeMax = new Date(now.getFullYear(), now.getMonth() + 7, 0).toISOString();
+
+  // セッション取得後の独立した 3 つのデータ取得を並列実行
+  const [rawProjects, allEvents, userSettingRaw] = await Promise.all([
+    db.project.findMany({
+      where: {
+        OR: [
+          { userId: session.user.id },
+          { projectMembers: { some: { userId: session.user.id } } },
+        ],
       },
-      projectMembers: { include: { user: true } },
-      pendingInvites: true,
-    },
-    orderBy: { createdAt: "asc" },
-  });
+      include: {
+        milestones: { orderBy: { order: "asc" } },
+        noteFolders: { orderBy: { order: "asc" } },
+        notes: {
+          include: { subtasks: { orderBy: { order: "asc" } } },
+          orderBy: { order: "asc" },
+        },
+        projectMembers: { include: { user: true } },
+        pendingInvites: true,
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    fetchGoogleCalendarEvents(session.user.id, timeMin, timeMax).catch(
+      () => [] as GoogleCalendarEvent[],
+    ),
+    db.userSetting.findUnique({ where: { userId: session.user.id } }),
+  ]);
 
   const projects = rawProjects.map((p) => ({
     ...p,
@@ -60,20 +75,11 @@ export default async function Page() {
     );
   }
 
-  const now = new Date();
-  const timeMin = new Date(now.getFullYear(), now.getMonth() - 6, 1).toISOString();
-  const timeMax = new Date(now.getFullYear(), now.getMonth() + 7, 0).toISOString();
-  let googleCalendarEvents: GoogleCalendarEvent[] = [];
-  try {
-    const allEvents = await fetchGoogleCalendarEvents(session.user.id, timeMin, timeMax);
-    // ワークスペースが作成したイベントはアクションチップで表示済みなので除外
-    const workspaceEventIds = new Set(
-      projResult.data.flatMap((p) => p.notes.map((n) => n.googleEventId)).filter(Boolean),
-    );
-    googleCalendarEvents = allEvents.filter((e) => !workspaceEventIds.has(e.id));
-  } catch {
-    // fail silently — calendar sync is best-effort
-  }
+  // ワークスペースが作成したイベントはアクションチップで表示済みなので除外
+  const workspaceEventIds = new Set(
+    projResult.data.flatMap((p) => p.notes.map((n) => n.googleEventId)).filter(Boolean),
+  );
+  const googleCalendarEvents = allEvents.filter((e) => !workspaceEventIds.has(e.id));
 
   const user = {
     name: session.user?.name ?? null,
@@ -81,7 +87,9 @@ export default async function Page() {
     image: session.user?.image ?? null,
   };
 
-  const userSetting = await getUserSetting();
+  const userSetting = {
+    workStartTime: userSettingRaw?.workStartTime ?? DEFAULT_WORK_START_TIME,
+  };
 
   const handleSignOut = async () => {
     "use server";
