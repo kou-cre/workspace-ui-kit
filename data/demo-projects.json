@@ -9,11 +9,11 @@
     "notes": [
       { "id": "me-5", "date": "2026-05-30", "time": "08:00", "duration": 30, "kind": "Todo", "status": "対応中", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "メールとSlackの確認", "text": "夜間に届いた連絡をチェックして返信", "subtasks": [] },
       { "id": "me-1", "date": "2026-05-30", "time": "09:30", "duration": 30, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "朝のタスク整理", "text": "今日やることを棚卸しして優先順位をつける", "subtasks": [] },
-      { "id": "me-6", "date": "2026-05-30", "time": "11:00", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "high", "title": "みらいフーズ提案資料の手直し", "text": "定例MTGで使う資料を最新の進捗に更新", "subtasks": [] },
+      { "id": "me-6", "date": "2026-05-30", "time": "11:00", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "high", "title": "こまち食品提案資料の手直し", "text": "定例MTGで使う資料を最新の進捗に更新", "subtasks": [] },
       { "id": "me-7", "date": "2026-05-30", "time": "12:00", "duration": 60, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "low", "title": "昼休憩", "text": "", "subtasks": [] },
-      { "id": "me-2", "date": "2026-05-30", "time": "13:00", "duration": 60, "kind": "Todo", "status": "対応中", "phase": null, "isAction": true, "done": false, "priority": "high", "title": "請求書の送付", "text": "4月稼働分の請求書をまとめてクライアント3社に送付する", "subtasks": [ { "id": "me-2-a", "text": "みらいフーズ宛", "done": true }, { "id": "me-2-b", "text": "さくら工務店宛", "done": false }, { "id": "me-2-c", "text": "ブルーオーシャン宛", "done": false } ] },
-      { "id": "me-1b", "date": "2026-05-30", "time": "14:00", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "みらいフーズ定例MTG（同席）", "text": "予約システムの進捗共有に同席", "subtasks": [] },
-      { "id": "me-8", "date": "2026-05-30", "time": "15:00", "duration": 30, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "ブルーオーシャン 在庫連携の進捗確認", "text": "同期ジョブの設計レビュー", "subtasks": [] },
+      { "id": "me-2", "date": "2026-05-30", "time": "13:00", "duration": 60, "kind": "Todo", "status": "対応中", "phase": null, "isAction": true, "done": false, "priority": "high", "title": "請求書の送付", "text": "4月稼働分の請求書をまとめてクライアント3社に送付する", "subtasks": [ { "id": "me-2-a", "text": "こまち食品宛", "done": true }, { "id": "me-2-b", "text": "大栄工務店宛", "done": false }, { "id": "me-2-c", "text": "フジオカ商会宛", "done": false } ] },
+      { "id": "me-1b", "date": "2026-05-30", "time": "14:00", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "こまち食品定例MTG（同席）", "text": "予約システムの進捗共有に同席", "subtasks": [] },
+      { "id": "me-8", "date": "2026-05-30", "time": "15:00", "duration": 30, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "フジオカ商会 在庫連携の進捗確認", "text": "同期ジョブの設計レビュー", "subtasks": [] },
       { "id": "me-3", "date": "2026-05-30", "time": "16:00", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "週次ふりかえり", "text": "今週の進捗を各案件のメモに反映する", "subtasks": [] },
       { "id": "me-9", "date": "2026-05-30", "time": "17:30", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "明日の段取りと日報", "text": "翌日のタスクを並べて日報を記入", "subtasks": [] },
       { "id": "me-10", "date": "2026-05-27", "kind": "Todo", "status": "解決済み", "phase": null, "isAction": true, "done": true, "priority": "normal", "title": "経費精算をまとめる", "text": "5月分の経費を会計ソフトに登録", "subtasks": [] },
@@ -28,7 +28,7 @@
     "id": "p1",
     "name": "フードデリバリー予約システム",
     "description": "電話とFAXで受けている宅配弁当の予約を、Webから受け付けて自動で集計する仕組み。",
-    "clients": ["株式会社みらいフーズ"],
+    "clients": ["株式会社こまち食品"],
     "status": "development",
     "ownerId": "u_demo",
     "milestones": [
@@ -68,7 +68,7 @@
     "id": "p2",
     "name": "見積書作成の自動化",
     "description": "現場ごとにExcelで手作りしている見積書を、項目を選ぶだけでPDF生成できるように。",
-    "clients": ["さくら工務店"],
+    "clients": ["大栄工務店"],
     "status": "proposal",
     "milestones": [
       { "id": "hearing", "label": "業務ヒアリング", "dueDate": "2026-05-10", "description": "" },
@@ -92,7 +92,7 @@
     "id": "p3",
     "name": "ECサイト在庫連携",
     "description": "実店舗とECの在庫がずれてクレームに。倉庫の在庫を両方に自動同期する。",
-    "clients": ["株式会社ブルーオーシャン"],
+    "clients": ["株式会社フジオカ商会"],
     "status": "development",
     "milestones": [
       { "id": "hearing", "label": "要件定義", "dueDate": "2026-04-15", "description": "" },
@@ -120,7 +120,7 @@
     "id": "p4",
     "name": "予約リマインドBot",
     "description": "歯科の予約無断キャンセルを減らすため、前日にSMSでリマインドを送る。",
-    "clients": ["ハレルヤ歯科クリニック"],
+    "clients": ["あおば歯科クリニック"],
     "status": "delivery",
     "milestones": [
       { "id": "hearing", "label": "課題整理", "dueDate": "2026-03-20", "description": "" },
@@ -145,7 +145,7 @@
     "id": "p5",
     "name": "配送ルート最適化",
     "description": "ドライバーの配送順を勘で決めている状態。住所から最短ルートを自動提案する。",
-    "clients": ["株式会社ノースウインド"],
+    "clients": ["三栄運輸株式会社"],
     "status": "hearing",
     "milestones": [
       { "id": "hearing", "label": "現状把握", "dueDate": null, "description": "1日の配送件数と地域を確認" },
@@ -168,7 +168,7 @@
     "id": "p6",
     "name": "定期購入の解約分析",
     "description": "化粧品のサブスク解約理由が見えない。解約アンケートを自動集計してダッシュボード化。",
-    "clients": ["グリーンリーフ株式会社"],
+    "clients": ["株式会社シャルム"],
     "status": "maintenance",
     "milestones": [
       { "id": "hearing", "label": "指標設計", "dueDate": "2026-02-10", "description": "" },
@@ -216,7 +216,7 @@
     "id": "p8",
     "name": "売上ダッシュボード",
     "description": "店舗別の日次売上をスプレッドシートに手入力している。POSから自動取り込みする。",
-    "clients": ["株式会社みらいフーズ"],
+    "clients": ["株式会社こまち食品"],
     "status": "proposal",
     "milestones": [
       { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-05-20", "description": "" },
@@ -239,7 +239,7 @@
     "id": "p9",
     "name": "問い合わせチャットBot",
     "description": "工務店への施工に関する問い合わせをチャットで一次対応する。",
-    "clients": ["さくら工務店"],
+    "clients": ["大栄工務店"],
     "status": "development",
     "milestones": [
       { "id": "hearing", "label": "FAQ整理", "dueDate": "2026-04-30", "description": "" },
