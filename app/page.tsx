@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { Workspace } from "@/components/workspace/Workspace";
 import workspaceData from "@/data/workspace.json";
+import demoProjectsData from "@/data/demo-projects.json";
+import demoCalendarData from "@/data/demo-calendar.json";
 import { auth, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import {
@@ -11,7 +13,53 @@ import {
 } from "@/lib/schema";
 import { fetchGoogleCalendarEvents } from "@/lib/google-calendar";
 
+/**
+ * スクリーンショット用デモモード。
+ * DEMO_MODE=true のとき、認証・DB・Google カレンダーを一切使わず、
+ * data/demo-*.json のダミーデータと固定のデモユーザーで描画する。
+ * フラグ未設定（=本番）の場合はこの分岐に入らないため、本番経路は無傷。
+ */
+async function renderDemoWorkspace() {
+  const wsResult = workspaceSchema.safeParse(workspaceData);
+  if (!wsResult.success) {
+    throw new Error(
+      `workspace.json の形式が正しくありません: ${wsResult.error.issues[0]?.message}`,
+    );
+  }
+
+  const projResult = projectsSchema.safeParse(demoProjectsData);
+  if (!projResult.success) {
+    throw new Error(
+      `demo-projects.json の形式が正しくありません: ${projResult.error.issues[0]?.message}`,
+    );
+  }
+
+  const user = { name: "三上 健", email: "ken@example.com", image: null };
+  const userSetting = { workStartTime: DEFAULT_WORK_START_TIME };
+  const googleCalendarEvents = demoCalendarData as GoogleCalendarEvent[];
+
+  const handleSignOut = async () => {
+    "use server";
+    redirect("/");
+  };
+
+  return (
+    <Workspace
+      initialProjects={projResult.data}
+      workspace={wsResult.data}
+      user={user}
+      onSignOut={handleSignOut}
+      googleCalendarEvents={googleCalendarEvents}
+      initialUserSetting={userSetting}
+    />
+  );
+}
+
 export default async function Page() {
+  if (process.env.DEMO_MODE === "true") {
+    return renderDemoWorkspace();
+  }
+
   const session = await auth();
   if (!session) redirect("/login");
 
