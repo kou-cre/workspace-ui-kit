@@ -8,6 +8,21 @@
     "noteFolders": [],
     "notes": [
       {
+        "id": "me-5",
+        "date": "2026-05-30",
+        "time": "08:00",
+        "duration": 30,
+        "kind": "Todo",
+        "status": "対応中",
+        "phase": null,
+        "isAction": true,
+        "done": false,
+        "priority": "normal",
+        "title": "メールとSlackの確認",
+        "text": "夜間に届いた連絡をチェックして返信",
+        "subtasks": []
+      },
+      {
         "id": "me-1",
         "date": "2026-05-30",
         "time": "09:30",
@@ -20,6 +35,36 @@
         "priority": "normal",
         "title": "朝のタスク整理",
         "text": "今日やることを棚卸しして優先順位をつける",
+        "subtasks": []
+      },
+      {
+        "id": "me-6",
+        "date": "2026-05-30",
+        "time": "11:00",
+        "duration": 45,
+        "kind": "Todo",
+        "status": "未解決",
+        "phase": null,
+        "isAction": true,
+        "done": false,
+        "priority": "high",
+        "title": "みらいフーズ提案資料の手直し",
+        "text": "定例MTGで使う資料を最新の進捗に更新",
+        "subtasks": []
+      },
+      {
+        "id": "me-7",
+        "date": "2026-05-30",
+        "time": "12:00",
+        "duration": 60,
+        "kind": "Todo",
+        "status": "未解決",
+        "phase": null,
+        "isAction": true,
+        "done": false,
+        "priority": "low",
+        "title": "昼休憩",
+        "text": "",
         "subtasks": []
       },
       {
@@ -42,6 +87,36 @@
         ]
       },
       {
+        "id": "me-1b",
+        "date": "2026-05-30",
+        "time": "14:00",
+        "duration": 45,
+        "kind": "Todo",
+        "status": "未解決",
+        "phase": null,
+        "isAction": true,
+        "done": false,
+        "priority": "normal",
+        "title": "みらいフーズ定例MTG（同席）",
+        "text": "予約システムの進捗共有に同席",
+        "subtasks": []
+      },
+      {
+        "id": "me-8",
+        "date": "2026-05-30",
+        "time": "15:00",
+        "duration": 30,
+        "kind": "Todo",
+        "status": "未解決",
+        "phase": null,
+        "isAction": true,
+        "done": false,
+        "priority": "normal",
+        "title": "ブルーオーシャン 在庫連携の進捗確認",
+        "text": "同期ジョブの設計レビュー",
+        "subtasks": []
+      },
+      {
         "id": "me-3",
         "date": "2026-05-30",
         "time": "16:00",
@@ -54,6 +129,60 @@
         "priority": "normal",
         "title": "週次ふりかえり",
         "text": "今週の進捗を各案件のメモに反映する",
+        "subtasks": []
+      },
+      {
+        "id": "me-9",
+        "date": "2026-05-30",
+        "time": "17:30",
+        "duration": 45,
+        "kind": "Todo",
+        "status": "未解決",
+        "phase": null,
+        "isAction": true,
+        "done": false,
+        "priority": "normal",
+        "title": "明日の段取りと日報",
+        "text": "翌日のタスクを並べて日報を記入",
+        "subtasks": []
+      },
+      {
+        "id": "me-10",
+        "date": "2026-05-27",
+        "kind": "Todo",
+        "status": "解決済み",
+        "phase": null,
+        "isAction": true,
+        "done": true,
+        "priority": "normal",
+        "title": "経費精算をまとめる",
+        "text": "5月分の経費を会計ソフトに登録",
+        "subtasks": []
+      },
+      {
+        "id": "me-11",
+        "date": "2026-05-28",
+        "kind": "Todo",
+        "status": "解決済み",
+        "phase": null,
+        "isAction": true,
+        "done": true,
+        "priority": "normal",
+        "title": "請求書ドラフト3社分",
+        "text": "送付前の下書きを作成",
+        "subtasks": []
+      },
+      {
+        "id": "me-12",
+        "date": "2026-05-31",
+        "kind": "Todo",
+        "status": "未解決",
+        "phase": null,
+        "isAction": true,
+        "done": false,
+        "priority": "normal",
+        "title": "月末の締め作業",
+        "text": "稼働時間の集計と月次の振り返り",
         "subtasks": []
       },
       {
@@ -99,6 +228,11 @@
     ],
     "notes": [
       {
+        "id": "a1-0", "date": "2026-05-04", "kind": "Todo", "status": "解決済み",
+        "phase": "development", "isAction": true, "done": true, "priority": "normal",
+        "title": "店舗オペレーションの2回目ヒアリング", "text": "受取スロットの運用を現場と確認", "subtasks": []
+      },
+      {
         "id": "a1-1", "date": "2026-04-05", "kind": "Todo", "status": "解決済み",
         "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
         "title": "現行の予約フローをヒアリング", "text": "電話・FAX・店頭の3経路を整理した", "subtasks": []
@@ -133,11 +267,6 @@
         "id": "a1-6", "date": "2026-05-30", "time": "10:30", "duration": 60, "kind": "Todo", "status": "対応中",
         "phase": "development", "isAction": true, "done": false, "priority": "high",
         "title": "本番DBのスキーマ確定", "text": "注文・メニュー・店舗の3テーブルでレビュー", "assignee": "三上 健", "subtasks": []
-      },
-      {
-        "id": "a1-7", "date": "2026-05-30", "time": "14:00", "duration": 45, "kind": "Todo", "status": "未解決",
-        "phase": "development", "isAction": true, "done": false, "priority": "normal",
-        "title": "みらいフーズ定例MTG", "text": "進捗共有と受取時間スロットの最終確認", "subtasks": []
       },
       {
         "id": "n1-1", "date": "2026-05-12", "kind": "アイデア", "status": "未解決",
@@ -185,6 +314,11 @@
     "pendingInvites": [],
     "notes": [
       {
+        "id": "a2-0", "date": "2026-05-05", "kind": "Todo", "status": "解決済み",
+        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
+        "title": "現行の見積フローを確認", "text": "誰が・どの順で見積を作っているかを整理", "subtasks": []
+      },
+      {
         "id": "a2-1", "date": "2026-05-08", "kind": "Todo", "status": "解決済み",
         "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
         "title": "既存見積書を10件入手", "text": "項目の共通パターンを抽出", "subtasks": []
@@ -221,6 +355,16 @@
     ],
     "pendingInvites": [],
     "notes": [
+      {
+        "id": "a3-0", "date": "2026-05-06", "kind": "Todo", "status": "解決済み",
+        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
+        "title": "現行の在庫オペレーション把握", "text": "店舗とECで在庫がずれる原因を特定", "subtasks": []
+      },
+      {
+        "id": "a3-3", "date": "2026-05-14", "kind": "Todo", "status": "解決済み",
+        "phase": "proposal", "isAction": true, "done": true, "priority": "normal",
+        "title": "倉庫システムとのAPI疎通テスト", "text": "在庫数の取得が安定して取れるか確認", "assignee": "小林 大輔", "subtasks": []
+      },
       {
         "id": "a3-1", "date": "2026-05-19", "kind": "Todo", "status": "解決済み",
         "phase": "development", "isAction": true, "done": true, "priority": "high",
@@ -263,6 +407,11 @@
         "title": "SMS送信の実装", "text": "予約システムのCSVを取り込んで前日19時に一斉送信", "subtasks": []
       },
       {
+        "id": "a4-0", "date": "2026-05-07", "kind": "Todo", "status": "解決済み",
+        "phase": "development", "isAction": true, "done": true, "priority": "normal",
+        "title": "リマインド文面の確定", "text": "クリニックの言い回しに合わせて2案から決定", "subtasks": []
+      },
+      {
         "id": "a4-2", "date": "2026-05-08", "kind": "Todo", "status": "解決済み",
         "phase": "development", "isAction": true, "done": true, "priority": "normal",
         "title": "3週間のテスト運用", "text": "無断キャンセルが12%→4%に改善", "subtasks": []
@@ -301,6 +450,11 @@
     ],
     "notes": [
       {
+        "id": "a5-0", "date": "2026-05-13", "kind": "Todo", "status": "解決済み",
+        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
+        "title": "配送エリアの洗い出し", "text": "担当エリアと1日の件数をヒアリング", "subtasks": []
+      },
+      {
         "id": "a5-1", "date": "2026-06-20", "kind": "Todo", "status": "未解決",
         "phase": "hearing", "isAction": true, "done": false, "priority": "normal",
         "title": "1日の配送データを入手", "text": "直近1週間分の配送伝票をもらう", "subtasks": []
@@ -338,6 +492,11 @@
         "title": "ダッシュボード公開", "text": "解約理由を月別・年代別に可視化", "subtasks": []
       },
       {
+        "id": "a6-0", "date": "2026-05-11", "kind": "Todo", "status": "解決済み",
+        "phase": "maintenance", "isAction": true, "done": true, "priority": "normal",
+        "title": "4月分の集計レポート送付", "text": "解約率と主要因をまとめて共有", "subtasks": []
+      },
+      {
         "id": "a6-2", "date": "2026-06-25", "kind": "Todo", "status": "未解決",
         "phase": "maintenance", "isAction": true, "done": false, "priority": "low",
         "title": "5月分のレポート更新", "text": "月初に集計を回して共有", "subtasks": []
@@ -366,6 +525,11 @@
     ],
     "pendingInvites": [],
     "notes": [
+      {
+        "id": "a7-0", "date": "2026-05-17", "kind": "Todo", "status": "解決済み",
+        "phase": "development", "isAction": true, "done": true, "priority": "normal",
+        "title": "健康状態の自動ソートを実装", "text": "要対応→注意→順調で並ぶようにした", "subtasks": []
+      },
       {
         "id": "a7-1", "date": "2026-06-15", "kind": "Todo", "status": "対応中",
         "phase": "development", "isAction": true, "done": false, "priority": "normal",
@@ -398,6 +562,11 @@
     "pendingInvites": [],
     "notes": [
       {
+        "id": "a8-0", "date": "2026-05-15", "kind": "Todo", "status": "解決済み",
+        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
+        "title": "現行の売上集計フローを確認", "text": "手入力の手順と所要時間を把握", "subtasks": []
+      },
+      {
         "id": "a8-1", "date": "2026-06-18", "kind": "Todo", "status": "未解決",
         "phase": "proposal", "isAction": true, "done": false, "priority": "normal",
         "title": "POS連携の可否を確認", "text": "使用中POSのエクスポート形式を調査", "subtasks": []
@@ -429,6 +598,16 @@
     ],
     "pendingInvites": [],
     "notes": [
+      {
+        "id": "a9-0", "date": "2026-05-16", "kind": "Todo", "status": "解決済み",
+        "phase": "proposal", "isAction": true, "done": true, "priority": "normal",
+        "title": "過去の問い合わせ100件を分類", "text": "よくある質問の傾向を整理", "subtasks": []
+      },
+      {
+        "id": "a9-4", "date": "2026-05-27", "kind": "Todo", "status": "解決済み",
+        "phase": "proposal", "isAction": true, "done": true, "priority": "normal",
+        "title": "回答シナリオの叩き台を作成", "text": "カテゴリ別に一次回答のテンプレを用意", "assignee": "田中 涼", "subtasks": []
+      },
       {
         "id": "a9-1", "date": "2026-06-03", "kind": "Todo", "status": "対応中",
         "phase": "development", "isAction": true, "done": false, "priority": "high",
