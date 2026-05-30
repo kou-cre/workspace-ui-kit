@@ -7,197 +7,21 @@
     "milestones": [],
     "noteFolders": [],
     "notes": [
-      {
-        "id": "me-5",
-        "date": "2026-05-30",
-        "time": "08:00",
-        "duration": 30,
-        "kind": "Todo",
-        "status": "対応中",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "normal",
-        "title": "メールとSlackの確認",
-        "text": "夜間に届いた連絡をチェックして返信",
-        "subtasks": []
-      },
-      {
-        "id": "me-1",
-        "date": "2026-05-30",
-        "time": "09:30",
-        "duration": 30,
-        "kind": "Todo",
-        "status": "未解決",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "normal",
-        "title": "朝のタスク整理",
-        "text": "今日やることを棚卸しして優先順位をつける",
-        "subtasks": []
-      },
-      {
-        "id": "me-6",
-        "date": "2026-05-30",
-        "time": "11:00",
-        "duration": 45,
-        "kind": "Todo",
-        "status": "未解決",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "high",
-        "title": "みらいフーズ提案資料の手直し",
-        "text": "定例MTGで使う資料を最新の進捗に更新",
-        "subtasks": []
-      },
-      {
-        "id": "me-7",
-        "date": "2026-05-30",
-        "time": "12:00",
-        "duration": 60,
-        "kind": "Todo",
-        "status": "未解決",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "low",
-        "title": "昼休憩",
-        "text": "",
-        "subtasks": []
-      },
-      {
-        "id": "me-2",
-        "date": "2026-05-30",
-        "time": "13:00",
-        "duration": 60,
-        "kind": "Todo",
-        "status": "対応中",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "high",
-        "title": "請求書の送付",
-        "text": "4月稼働分の請求書をまとめてクライアント3社に送付する",
-        "subtasks": [
-          { "id": "me-2-a", "text": "みらいフーズ宛", "done": true },
-          { "id": "me-2-b", "text": "さくら工務店宛", "done": false },
-          { "id": "me-2-c", "text": "ブルーオーシャン宛", "done": false }
-        ]
-      },
-      {
-        "id": "me-1b",
-        "date": "2026-05-30",
-        "time": "14:00",
-        "duration": 45,
-        "kind": "Todo",
-        "status": "未解決",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "normal",
-        "title": "みらいフーズ定例MTG（同席）",
-        "text": "予約システムの進捗共有に同席",
-        "subtasks": []
-      },
-      {
-        "id": "me-8",
-        "date": "2026-05-30",
-        "time": "15:00",
-        "duration": 30,
-        "kind": "Todo",
-        "status": "未解決",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "normal",
-        "title": "ブルーオーシャン 在庫連携の進捗確認",
-        "text": "同期ジョブの設計レビュー",
-        "subtasks": []
-      },
-      {
-        "id": "me-3",
-        "date": "2026-05-30",
-        "time": "16:00",
-        "duration": 45,
-        "kind": "Todo",
-        "status": "未解決",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "normal",
-        "title": "週次ふりかえり",
-        "text": "今週の進捗を各案件のメモに反映する",
-        "subtasks": []
-      },
-      {
-        "id": "me-9",
-        "date": "2026-05-30",
-        "time": "17:30",
-        "duration": 45,
-        "kind": "Todo",
-        "status": "未解決",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "normal",
-        "title": "明日の段取りと日報",
-        "text": "翌日のタスクを並べて日報を記入",
-        "subtasks": []
-      },
-      {
-        "id": "me-10",
-        "date": "2026-05-27",
-        "kind": "Todo",
-        "status": "解決済み",
-        "phase": null,
-        "isAction": true,
-        "done": true,
-        "priority": "normal",
-        "title": "経費精算をまとめる",
-        "text": "5月分の経費を会計ソフトに登録",
-        "subtasks": []
-      },
-      {
-        "id": "me-11",
-        "date": "2026-05-28",
-        "kind": "Todo",
-        "status": "解決済み",
-        "phase": null,
-        "isAction": true,
-        "done": true,
-        "priority": "normal",
-        "title": "請求書ドラフト3社分",
-        "text": "送付前の下書きを作成",
-        "subtasks": []
-      },
-      {
-        "id": "me-12",
-        "date": "2026-05-31",
-        "kind": "Todo",
-        "status": "未解決",
-        "phase": null,
-        "isAction": true,
-        "done": false,
-        "priority": "normal",
-        "title": "月末の締め作業",
-        "text": "稼働時間の集計と月次の振り返り",
-        "subtasks": []
-      },
-      {
-        "id": "me-4",
-        "date": "2026-06-01",
-        "kind": "メモ",
-        "status": "未解決",
-        "phase": null,
-        "isAction": false,
-        "done": false,
-        "priority": "low",
-        "title": "読みたい記事",
-        "text": "RAG の精度改善に関する記事を週末にまとめて読む",
-        "subtasks": []
-      }
+      { "id": "me-5", "date": "2026-05-30", "time": "08:00", "duration": 30, "kind": "Todo", "status": "対応中", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "メールとSlackの確認", "text": "夜間に届いた連絡をチェックして返信", "subtasks": [] },
+      { "id": "me-1", "date": "2026-05-30", "time": "09:30", "duration": 30, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "朝のタスク整理", "text": "今日やることを棚卸しして優先順位をつける", "subtasks": [] },
+      { "id": "me-6", "date": "2026-05-30", "time": "11:00", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "high", "title": "みらいフーズ提案資料の手直し", "text": "定例MTGで使う資料を最新の進捗に更新", "subtasks": [] },
+      { "id": "me-7", "date": "2026-05-30", "time": "12:00", "duration": 60, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "low", "title": "昼休憩", "text": "", "subtasks": [] },
+      { "id": "me-2", "date": "2026-05-30", "time": "13:00", "duration": 60, "kind": "Todo", "status": "対応中", "phase": null, "isAction": true, "done": false, "priority": "high", "title": "請求書の送付", "text": "4月稼働分の請求書をまとめてクライアント3社に送付する", "subtasks": [ { "id": "me-2-a", "text": "みらいフーズ宛", "done": true }, { "id": "me-2-b", "text": "さくら工務店宛", "done": false }, { "id": "me-2-c", "text": "ブルーオーシャン宛", "done": false } ] },
+      { "id": "me-1b", "date": "2026-05-30", "time": "14:00", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "みらいフーズ定例MTG（同席）", "text": "予約システムの進捗共有に同席", "subtasks": [] },
+      { "id": "me-8", "date": "2026-05-30", "time": "15:00", "duration": 30, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "ブルーオーシャン 在庫連携の進捗確認", "text": "同期ジョブの設計レビュー", "subtasks": [] },
+      { "id": "me-3", "date": "2026-05-30", "time": "16:00", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "週次ふりかえり", "text": "今週の進捗を各案件のメモに反映する", "subtasks": [] },
+      { "id": "me-9", "date": "2026-05-30", "time": "17:30", "duration": 45, "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "明日の段取りと日報", "text": "翌日のタスクを並べて日報を記入", "subtasks": [] },
+      { "id": "me-10", "date": "2026-05-27", "kind": "Todo", "status": "解決済み", "phase": null, "isAction": true, "done": true, "priority": "normal", "title": "経費精算をまとめる", "text": "5月分の経費を会計ソフトに登録", "subtasks": [] },
+      { "id": "me-11", "date": "2026-05-28", "kind": "Todo", "status": "解決済み", "phase": null, "isAction": true, "done": true, "priority": "normal", "title": "請求書ドラフト3社分", "text": "送付前の下書きを作成", "subtasks": [] },
+      { "id": "me-12", "date": "2026-05-31", "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "月末の締め作業", "text": "稼働時間の集計と月次の振り返り", "subtasks": [] },
+      { "id": "me-13", "date": "2026-06-03", "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "normal", "title": "来月の請求準備", "text": "5月稼働分の請求書を下書き", "subtasks": [] },
+      { "id": "me-14", "date": "2026-06-03", "kind": "Todo", "status": "未解決", "phase": null, "isAction": true, "done": false, "priority": "low", "title": "学習時間の確保", "text": "新しいAIツールの検証を1時間", "subtasks": [] },
+      { "id": "me-4", "date": "2026-06-01", "kind": "メモ", "status": "未解決", "phase": null, "isAction": false, "done": false, "priority": "low", "title": "読みたい記事", "text": "RAG の精度改善に関する記事を週末にまとめて読む", "subtasks": [] }
     ]
   },
   {
@@ -223,75 +47,21 @@
       { "id": "pm-1-2", "userId": "u_sato", "name": "佐藤 美咲", "email": "misaki.sato@example.com", "image": null },
       { "id": "pm-1-3", "userId": "u_tanaka", "name": "田中 涼", "email": "ryo.tanaka@example.com", "image": null }
     ],
-    "pendingInvites": [
-      { "id": "pi-1-1", "email": "new.designer@example.com" }
-    ],
+    "pendingInvites": [ { "id": "pi-1-1", "email": "new.designer@example.com" } ],
     "notes": [
-      {
-        "id": "a1-0", "date": "2026-05-04", "kind": "Todo", "status": "解決済み",
-        "phase": "development", "isAction": true, "done": true, "priority": "normal",
-        "title": "店舗オペレーションの2回目ヒアリング", "text": "受取スロットの運用を現場と確認", "subtasks": []
-      },
-      {
-        "id": "a1-1", "date": "2026-04-05", "kind": "Todo", "status": "解決済み",
-        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
-        "title": "現行の予約フローをヒアリング", "text": "電話・FAX・店頭の3経路を整理した", "subtasks": []
-      },
-      {
-        "id": "a1-2", "date": "2026-04-08", "kind": "Todo", "status": "解決済み",
-        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
-        "title": "ピーク時間帯の確認", "text": "11:00-12:00 に注文が集中する", "subtasks": []
-      },
-      {
-        "id": "a1-3", "date": "2026-04-22", "kind": "Todo", "status": "解決済み",
-        "phase": "proposal", "isAction": true, "done": true, "priority": "normal",
-        "title": "提案書（3プラン）を提出", "text": "松竹梅で提示し、竹プランで合意", "subtasks": []
-      },
-      {
-        "id": "a1-4", "date": "2026-05-18", "kind": "Todo", "status": "対応中",
-        "phase": "development", "isAction": true, "done": false, "priority": "urgent",
-        "title": "予約フォームの実装", "text": "メニュー選択・受取時間・支払い方法の3ステップ",
-        "assignee": "田中 涼",
-        "subtasks": [
-          { "id": "a1-4-a", "text": "メニュー選択UI", "done": true },
-          { "id": "a1-4-b", "text": "受取時間スロット", "done": true },
-          { "id": "a1-4-c", "text": "支払い方法の分岐", "done": false }
-        ]
-      },
-      {
-        "id": "a1-5", "date": "2026-05-22", "kind": "Todo", "status": "未解決",
-        "phase": "development", "isAction": true, "done": false, "priority": "high",
-        "title": "日次集計バッチ", "text": "当日分の注文をCSVで店舗に自動送付", "assignee": "三上 健", "subtasks": []
-      },
-      {
-        "id": "a1-6", "date": "2026-05-30", "time": "10:30", "duration": 60, "kind": "Todo", "status": "対応中",
-        "phase": "development", "isAction": true, "done": false, "priority": "high",
-        "title": "本番DBのスキーマ確定", "text": "注文・メニュー・店舗の3テーブルでレビュー", "assignee": "三上 健", "subtasks": []
-      },
-      {
-        "id": "n1-1", "date": "2026-05-12", "kind": "アイデア", "status": "未解決",
-        "phase": null, "isAction": false, "done": false, "priority": "normal",
-        "title": "LINE通知連携", "text": "予約確定をLINEに飛ばせると電話確認が減って喜ばれそう。次フェーズの保守契約のフックにできる。", "subtasks": []
-      },
-      {
-        "id": "n1-2", "date": "2026-05-15", "kind": "課題", "status": "未解決",
-        "phase": "development", "isAction": false, "done": false, "priority": "high",
-        "title": "キャンセル時の在庫戻し", "text": "予約キャンセル時に弁当の仕込み数をどう戻すか。店舗オペレーションと要すり合わせ。",
-        "subtasks": [
-          { "id": "n1-2-a", "text": "締め切り時刻の定義", "done": false },
-          { "id": "n1-2-b", "text": "締め切り後キャンセルの扱い", "done": false }
-        ]
-      },
-      {
-        "id": "n1-3", "date": "2026-05-20", "kind": "議論余地", "status": "対応中",
-        "phase": "development", "isAction": false, "done": false, "priority": "normal",
-        "title": "決済代行はどこを使うか", "text": "Stripe か Square か。手数料と入金サイクルで比較中。先方の経理は月次入金を希望。", "subtasks": []
-      },
-      {
-        "id": "n1-4", "date": "2026-05-24", "kind": "メモ", "status": "解決済み",
-        "phase": null, "isAction": false, "done": false, "priority": "low",
-        "title": "店舗の営業時間", "text": "平日 10:00-20:00 / 土日 11:00-19:00。受取スロットはこの範囲で生成する。", "subtasks": []
-      }
+      { "id": "a1-0", "date": "2026-05-04", "kind": "Todo", "status": "解決済み", "phase": "development", "isAction": true, "done": true, "priority": "normal", "title": "店舗オペレーションの2回目ヒアリング", "text": "受取スロットの運用を現場と確認", "subtasks": [] },
+      { "id": "a1-1", "date": "2026-04-05", "kind": "Todo", "status": "解決済み", "phase": "hearing", "isAction": true, "done": true, "priority": "normal", "title": "現行の予約フローをヒアリング", "text": "電話・FAX・店頭の3経路を整理した", "subtasks": [] },
+      { "id": "a1-2", "date": "2026-04-08", "kind": "Todo", "status": "解決済み", "phase": "hearing", "isAction": true, "done": true, "priority": "normal", "title": "ピーク時間帯の確認", "text": "11:00-12:00 に注文が集中する", "subtasks": [] },
+      { "id": "a1-3", "date": "2026-04-22", "kind": "Todo", "status": "解決済み", "phase": "proposal", "isAction": true, "done": true, "priority": "normal", "title": "提案書（3プラン）を提出", "text": "松竹梅で提示し、竹プランで合意", "subtasks": [] },
+      { "id": "a1-4", "date": "2026-05-18", "kind": "Todo", "status": "対応中", "phase": "development", "isAction": true, "done": false, "priority": "urgent", "title": "予約フォームの実装", "text": "メニュー選択・受取時間・支払い方法の3ステップ", "assignee": "田中 涼", "subtasks": [ { "id": "a1-4-a", "text": "メニュー選択UI", "done": true }, { "id": "a1-4-b", "text": "受取時間スロット", "done": true }, { "id": "a1-4-c", "text": "支払い方法の分岐", "done": false } ] },
+      { "id": "a1-5", "date": "2026-05-22", "kind": "Todo", "status": "未解決", "phase": "development", "isAction": true, "done": false, "priority": "high", "title": "日次集計バッチ", "text": "当日分の注文をCSVで店舗に自動送付", "assignee": "三上 健", "subtasks": [] },
+      { "id": "a1-6", "date": "2026-05-30", "time": "10:30", "duration": 60, "kind": "Todo", "status": "対応中", "phase": "development", "isAction": true, "done": false, "priority": "high", "title": "本番DBのスキーマ確定", "text": "注文・メニュー・店舗の3テーブルでレビュー", "assignee": "三上 健", "subtasks": [] },
+      { "id": "a1-8", "date": "2026-06-12", "kind": "Todo", "status": "未解決", "phase": "development", "isAction": true, "done": false, "priority": "normal", "title": "決済代行の組み込み", "text": "Stripe の本番キーで決済フローを実装", "assignee": "田中 涼", "subtasks": [] },
+      { "id": "a1-9", "date": "2026-06-23", "kind": "Todo", "status": "未解決", "phase": "development", "isAction": true, "done": false, "priority": "normal", "title": "受け入れテストの準備", "text": "テスト項目書を作成して先方に共有", "subtasks": [] },
+      { "id": "n1-1", "date": "2026-05-12", "kind": "アイデア", "status": "未解決", "phase": null, "isAction": false, "done": false, "priority": "normal", "title": "LINE通知連携", "text": "予約確定をLINEに飛ばせると電話確認が減って喜ばれそう。次フェーズの保守契約のフックにできる。", "subtasks": [] },
+      { "id": "n1-2", "date": "2026-05-15", "kind": "課題", "status": "未解決", "phase": "development", "isAction": false, "done": false, "priority": "high", "title": "キャンセル時の在庫戻し", "text": "予約キャンセル時に弁当の仕込み数をどう戻すか。店舗オペレーションと要すり合わせ。", "subtasks": [ { "id": "n1-2-a", "text": "締め切り時刻の定義", "done": false }, { "id": "n1-2-b", "text": "締め切り後キャンセルの扱い", "done": false } ] },
+      { "id": "n1-3", "date": "2026-05-20", "kind": "議論余地", "status": "対応中", "phase": "development", "isAction": false, "done": false, "priority": "normal", "title": "決済代行はどこを使うか", "text": "Stripe か Square か。手数料と入金サイクルで比較中。先方の経理は月次入金を希望。", "subtasks": [] },
+      { "id": "n1-4", "date": "2026-05-24", "kind": "メモ", "status": "解決済み", "phase": null, "isAction": false, "done": false, "priority": "low", "title": "店舗の営業時間", "text": "平日 10:00-20:00 / 土日 11:00-19:00。受取スロットはこの範囲で生成する。", "subtasks": [] }
     ]
   },
   {
@@ -308,31 +78,14 @@
       { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
-    "projectMembers": [
-      { "id": "pm-2-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null }
-    ],
+    "projectMembers": [ { "id": "pm-2-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null } ],
     "pendingInvites": [],
     "notes": [
-      {
-        "id": "a2-0", "date": "2026-05-05", "kind": "Todo", "status": "解決済み",
-        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
-        "title": "現行の見積フローを確認", "text": "誰が・どの順で見積を作っているかを整理", "subtasks": []
-      },
-      {
-        "id": "a2-1", "date": "2026-05-08", "kind": "Todo", "status": "解決済み",
-        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
-        "title": "既存見積書を10件入手", "text": "項目の共通パターンを抽出", "subtasks": []
-      },
-      {
-        "id": "a2-2", "date": "2026-06-18", "kind": "Todo", "status": "未解決",
-        "phase": "proposal", "isAction": true, "done": false, "priority": "normal",
-        "title": "概算見積もりを送付", "text": "初期費用と月額の2パターンを提示", "subtasks": []
-      },
-      {
-        "id": "n2-1", "date": "2026-05-26", "kind": "アイデア", "status": "未解決",
-        "phase": null, "isAction": false, "done": false, "priority": "normal",
-        "title": "原価マスタ連携", "text": "資材の単価表を取り込めば粗利も自動表示できる", "subtasks": []
-      }
+      { "id": "a2-0", "date": "2026-05-05", "kind": "Todo", "status": "解決済み", "phase": "hearing", "isAction": true, "done": true, "priority": "normal", "title": "現行の見積フローを確認", "text": "誰が・どの順で見積を作っているかを整理", "subtasks": [] },
+      { "id": "a2-1", "date": "2026-05-08", "kind": "Todo", "status": "解決済み", "phase": "hearing", "isAction": true, "done": true, "priority": "normal", "title": "既存見積書を10件入手", "text": "項目の共通パターンを抽出", "subtasks": [] },
+      { "id": "a2-2", "date": "2026-06-08", "kind": "Todo", "status": "未解決", "phase": "proposal", "isAction": true, "done": false, "priority": "normal", "title": "概算見積もりを送付", "text": "初期費用と月額の2パターンを提示", "subtasks": [] },
+      { "id": "a2-3", "date": "2026-06-16", "kind": "Todo", "status": "未解決", "phase": "proposal", "isAction": true, "done": false, "priority": "normal", "title": "見積項目のレビューMTG", "text": "現場担当と項目の過不足を確認", "subtasks": [] },
+      { "id": "n2-1", "date": "2026-05-26", "kind": "アイデア", "status": "未解決", "phase": null, "isAction": false, "done": false, "priority": "normal", "title": "原価マスタ連携", "text": "資材の単価表を取り込めば粗利も自動表示できる", "subtasks": [] }
     ]
   },
   {
@@ -355,31 +108,12 @@
     ],
     "pendingInvites": [],
     "notes": [
-      {
-        "id": "a3-0", "date": "2026-05-06", "kind": "Todo", "status": "解決済み",
-        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
-        "title": "現行の在庫オペレーション把握", "text": "店舗とECで在庫がずれる原因を特定", "subtasks": []
-      },
-      {
-        "id": "a3-3", "date": "2026-05-14", "kind": "Todo", "status": "解決済み",
-        "phase": "proposal", "isAction": true, "done": true, "priority": "normal",
-        "title": "倉庫システムとのAPI疎通テスト", "text": "在庫数の取得が安定して取れるか確認", "assignee": "小林 大輔", "subtasks": []
-      },
-      {
-        "id": "a3-1", "date": "2026-05-19", "kind": "Todo", "status": "解決済み",
-        "phase": "development", "isAction": true, "done": true, "priority": "high",
-        "title": "倉庫システムのAPI調査", "text": "在庫数の取得エンドポイントを確認、ポーリング方式で確定", "assignee": "小林 大輔", "subtasks": []
-      },
-      {
-        "id": "a3-2", "date": "2026-06-22", "kind": "Todo", "status": "未解決",
-        "phase": "development", "isAction": true, "done": false, "priority": "normal",
-        "title": "同期ジョブの設計", "text": "5分間隔のポーリングで仮実装", "subtasks": []
-      },
-      {
-        "id": "n3-1", "date": "2026-05-21", "kind": "課題", "status": "対応中",
-        "phase": "development", "isAction": false, "done": false, "priority": "high",
-        "title": "同時購入の在庫競合", "text": "店舗とECで同時に最後の1点が売れたときの引き当て順をどうするか。要設計判断。", "subtasks": []
-      }
+      { "id": "a3-0", "date": "2026-05-06", "kind": "Todo", "status": "解決済み", "phase": "hearing", "isAction": true, "done": true, "priority": "normal", "title": "現行の在庫オペレーション把握", "text": "店舗とECで在庫がずれる原因を特定", "subtasks": [] },
+      { "id": "a3-3", "date": "2026-05-14", "kind": "Todo", "status": "解決済み", "phase": "proposal", "isAction": true, "done": true, "priority": "normal", "title": "倉庫システムとのAPI疎通テスト", "text": "在庫数の取得が安定して取れるか確認", "assignee": "小林 大輔", "subtasks": [] },
+      { "id": "a3-1", "date": "2026-05-19", "kind": "Todo", "status": "解決済み", "phase": "development", "isAction": true, "done": true, "priority": "high", "title": "倉庫システムのAPI調査", "text": "在庫数の取得エンドポイントを確認、ポーリング方式で確定", "assignee": "小林 大輔", "subtasks": [] },
+      { "id": "a3-2", "date": "2026-06-10", "kind": "Todo", "status": "未解決", "phase": "development", "isAction": true, "done": false, "priority": "normal", "title": "同期ジョブの設計", "text": "5分間隔のポーリングで仮実装", "subtasks": [] },
+      { "id": "a3-4", "date": "2026-06-16", "kind": "Todo", "status": "未解決", "phase": "development", "isAction": true, "done": false, "priority": "normal", "title": "在庫差分の検知ロジック", "text": "倉庫とECの差分を検出してアラート", "assignee": "小林 大輔", "subtasks": [] },
+      { "id": "n3-1", "date": "2026-05-21", "kind": "課題", "status": "対応中", "phase": "development", "isAction": false, "done": false, "priority": "high", "title": "同時購入の在庫競合", "text": "店舗とECで同時に最後の1点が売れたときの引き当て順をどうするか。要設計判断。", "subtasks": [] }
     ]
   },
   {
@@ -396,36 +130,15 @@
       { "id": "maintenance", "label": "効果測定", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
-    "projectMembers": [
-      { "id": "pm-4-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null }
-    ],
+    "projectMembers": [ { "id": "pm-4-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null } ],
     "pendingInvites": [],
     "notes": [
-      {
-        "id": "a4-1", "date": "2026-04-25", "kind": "Todo", "status": "解決済み",
-        "phase": "development", "isAction": true, "done": true, "priority": "normal",
-        "title": "SMS送信の実装", "text": "予約システムのCSVを取り込んで前日19時に一斉送信", "subtasks": []
-      },
-      {
-        "id": "a4-0", "date": "2026-05-07", "kind": "Todo", "status": "解決済み",
-        "phase": "development", "isAction": true, "done": true, "priority": "normal",
-        "title": "リマインド文面の確定", "text": "クリニックの言い回しに合わせて2案から決定", "subtasks": []
-      },
-      {
-        "id": "a4-2", "date": "2026-05-08", "kind": "Todo", "status": "解決済み",
-        "phase": "development", "isAction": true, "done": true, "priority": "normal",
-        "title": "3週間のテスト運用", "text": "無断キャンセルが12%→4%に改善", "subtasks": []
-      },
-      {
-        "id": "a4-3", "date": "2026-06-20", "kind": "Todo", "status": "未解決",
-        "phase": "delivery", "isAction": true, "done": false, "priority": "normal",
-        "title": "操作マニュアルの引き渡し", "text": "受付スタッフ向けに1枚もので作成", "subtasks": []
-      },
-      {
-        "id": "n4-1", "date": "2026-05-10", "kind": "メモ", "status": "解決済み",
-        "phase": null, "isAction": false, "done": false, "priority": "low",
-        "title": "効果測定の数字", "text": "無断キャンセル率 12% → 4%。事例として実績に使える。", "subtasks": []
-      }
+      { "id": "a4-1", "date": "2026-04-25", "kind": "Todo", "status": "解決済み", "phase": "development", "isAction": true, "done": true, "priority": "normal", "title": "SMS送信の実装", "text": "予約システムのCSVを取り込んで前日19時に一斉送信", "subtasks": [] },
+      { "id": "a4-0", "date": "2026-05-07", "kind": "Todo", "status": "解決済み", "phase": "development", "isAction": true, "done": true, "priority": "normal", "title": "リマインド文面の確定", "text": "クリニックの言い回しに合わせて2案から決定", "subtasks": [] },
+      { "id": "a4-2", "date": "2026-05-08", "kind": "Todo", "status": "解決済み", "phase": "development", "isAction": true, "done": true, "priority": "normal", "title": "3週間のテスト運用", "text": "無断キャンセルが12%→4%に改善", "subtasks": [] },
+      { "id": "a4-3", "date": "2026-06-08", "kind": "Todo", "status": "未解決", "phase": "delivery", "isAction": true, "done": false, "priority": "normal", "title": "操作マニュアルの引き渡し", "text": "受付スタッフ向けに1枚もので作成", "subtasks": [] },
+      { "id": "a4-4", "date": "2026-06-18", "kind": "Todo", "status": "未解決", "phase": "delivery", "isAction": true, "done": false, "priority": "normal", "title": "受付スタッフ向け操作説明", "text": "実際の画面で15分のレクチャー", "subtasks": [] },
+      { "id": "n4-1", "date": "2026-05-10", "kind": "メモ", "status": "解決済み", "phase": null, "isAction": false, "done": false, "priority": "low", "title": "効果測定の数字", "text": "無断キャンセル率 12% → 4%。事例として実績に使える。", "subtasks": [] }
     ]
   },
   {
@@ -442,28 +155,13 @@
       { "id": "maintenance", "label": "本格運用", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
-    "projectMembers": [
-      { "id": "pm-5-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null }
-    ],
-    "pendingInvites": [
-      { "id": "pi-5-1", "email": "ops.northwind@example.com" }
-    ],
+    "projectMembers": [ { "id": "pm-5-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null } ],
+    "pendingInvites": [ { "id": "pi-5-1", "email": "ops.northwind@example.com" } ],
     "notes": [
-      {
-        "id": "a5-0", "date": "2026-05-13", "kind": "Todo", "status": "解決済み",
-        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
-        "title": "配送エリアの洗い出し", "text": "担当エリアと1日の件数をヒアリング", "subtasks": []
-      },
-      {
-        "id": "a5-1", "date": "2026-06-20", "kind": "Todo", "status": "未解決",
-        "phase": "hearing", "isAction": true, "done": false, "priority": "normal",
-        "title": "1日の配送データを入手", "text": "直近1週間分の配送伝票をもらう", "subtasks": []
-      },
-      {
-        "id": "n5-1", "date": "2026-05-28", "kind": "議論余地", "status": "未解決",
-        "phase": null, "isAction": false, "done": false, "priority": "normal",
-        "title": "地図APIの選定", "text": "Google Maps か OSRM か。コストと精度のバランスを次回提案。", "subtasks": []
-      }
+      { "id": "a5-0", "date": "2026-05-13", "kind": "Todo", "status": "解決済み", "phase": "hearing", "isAction": true, "done": true, "priority": "normal", "title": "配送エリアの洗い出し", "text": "担当エリアと1日の件数をヒアリング", "subtasks": [] },
+      { "id": "a5-1", "date": "2026-06-08", "kind": "Todo", "status": "未解決", "phase": "hearing", "isAction": true, "done": false, "priority": "normal", "title": "1日の配送データを入手", "text": "直近1週間分の配送伝票をもらう", "subtasks": [] },
+      { "id": "a5-2", "date": "2026-06-16", "kind": "Todo", "status": "未解決", "phase": "hearing", "isAction": true, "done": false, "priority": "normal", "title": "配送伝票のデータ化", "text": "もらった伝票を住所・時間でデータ化", "subtasks": [] },
+      { "id": "n5-1", "date": "2026-05-28", "kind": "議論余地", "status": "未解決", "phase": null, "isAction": false, "done": false, "priority": "normal", "title": "地図APIの選定", "text": "Google Maps か OSRM か。コストと精度のバランスを次回提案。", "subtasks": [] }
     ]
   },
   {
@@ -486,26 +184,11 @@
     ],
     "pendingInvites": [],
     "notes": [
-      {
-        "id": "a6-1", "date": "2026-04-10", "kind": "Todo", "status": "解決済み",
-        "phase": "delivery", "isAction": true, "done": true, "priority": "normal",
-        "title": "ダッシュボード公開", "text": "解約理由を月別・年代別に可視化", "subtasks": []
-      },
-      {
-        "id": "a6-0", "date": "2026-05-11", "kind": "Todo", "status": "解決済み",
-        "phase": "maintenance", "isAction": true, "done": true, "priority": "normal",
-        "title": "4月分の集計レポート送付", "text": "解約率と主要因をまとめて共有", "subtasks": []
-      },
-      {
-        "id": "a6-2", "date": "2026-06-25", "kind": "Todo", "status": "未解決",
-        "phase": "maintenance", "isAction": true, "done": false, "priority": "low",
-        "title": "5月分のレポート更新", "text": "月初に集計を回して共有", "subtasks": []
-      },
-      {
-        "id": "n6-1", "date": "2026-05-02", "kind": "アイデア", "status": "未解決",
-        "phase": null, "isAction": false, "done": false, "priority": "normal",
-        "title": "解約予兆スコア", "text": "ログイン頻度の低下から解約予兆を出せると引き止め施策に使える", "subtasks": []
-      }
+      { "id": "a6-1", "date": "2026-04-10", "kind": "Todo", "status": "解決済み", "phase": "delivery", "isAction": true, "done": true, "priority": "normal", "title": "ダッシュボード公開", "text": "解約理由を月別・年代別に可視化", "subtasks": [] },
+      { "id": "a6-0", "date": "2026-05-11", "kind": "Todo", "status": "解決済み", "phase": "maintenance", "isAction": true, "done": true, "priority": "normal", "title": "4月分の集計レポート送付", "text": "解約率と主要因をまとめて共有", "subtasks": [] },
+      { "id": "a6-2", "date": "2026-06-10", "kind": "Todo", "status": "未解決", "phase": "maintenance", "isAction": true, "done": false, "priority": "low", "title": "5月分のレポート更新", "text": "月初に集計を回して共有", "subtasks": [] },
+      { "id": "a6-3", "date": "2026-06-18", "kind": "Todo", "status": "未解決", "phase": "maintenance", "isAction": true, "done": false, "priority": "low", "title": "解約予兆スコアの試作", "text": "ログイン頻度から予兆を出せるか検証", "subtasks": [] },
+      { "id": "n6-1", "date": "2026-05-02", "kind": "アイデア", "status": "未解決", "phase": null, "isAction": false, "done": false, "priority": "normal", "title": "解約予兆スコア", "text": "ログイン頻度の低下から解約予兆を出せると引き止め施策に使える", "subtasks": [] }
     ]
   },
   {
@@ -520,26 +203,13 @@
       { "id": "release", "label": "リリース", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
-    "projectMembers": [
-      { "id": "pm-7-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null }
-    ],
+    "projectMembers": [ { "id": "pm-7-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null } ],
     "pendingInvites": [],
     "notes": [
-      {
-        "id": "a7-0", "date": "2026-05-17", "kind": "Todo", "status": "解決済み",
-        "phase": "development", "isAction": true, "done": true, "priority": "normal",
-        "title": "健康状態の自動ソートを実装", "text": "要対応→注意→順調で並ぶようにした", "subtasks": []
-      },
-      {
-        "id": "a7-1", "date": "2026-06-15", "kind": "Todo", "status": "対応中",
-        "phase": "development", "isAction": true, "done": false, "priority": "normal",
-        "title": "日次タイムラインの仕上げ", "text": "時間指定タスクの重なりレーン表示", "subtasks": []
-      },
-      {
-        "id": "n7-1", "date": "2026-05-27", "kind": "メモ", "status": "未解決",
-        "phase": null, "isAction": false, "done": false, "priority": "low",
-        "title": "次に作る機能", "text": "プロジェクトの健康状態ソートは好評。次は週次サマリーを検討。", "subtasks": []
-      }
+      { "id": "a7-0", "date": "2026-05-17", "kind": "Todo", "status": "解決済み", "phase": "development", "isAction": true, "done": true, "priority": "normal", "title": "健康状態の自動ソートを実装", "text": "要対応→注意→順調で並ぶようにした", "subtasks": [] },
+      { "id": "a7-1", "date": "2026-06-10", "kind": "Todo", "status": "対応中", "phase": "development", "isAction": true, "done": false, "priority": "normal", "title": "日次タイムラインの仕上げ", "text": "時間指定タスクの重なりレーン表示", "subtasks": [] },
+      { "id": "a7-2", "date": "2026-06-18", "kind": "Todo", "status": "未解決", "phase": "development", "isAction": true, "done": false, "priority": "normal", "title": "週次サマリーの追加", "text": "今週やったこと・やることを自動集計", "subtasks": [] },
+      { "id": "n7-1", "date": "2026-05-27", "kind": "メモ", "status": "未解決", "phase": null, "isAction": false, "done": false, "priority": "low", "title": "次に作る機能", "text": "プロジェクトの健康状態ソートは好評。次は週次サマリーを検討。", "subtasks": [] }
     ]
   },
   {
@@ -556,26 +226,13 @@
       { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
-    "projectMembers": [
-      { "id": "pm-8-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null }
-    ],
+    "projectMembers": [ { "id": "pm-8-1", "userId": "u_demo", "name": "三上 健", "email": "ken@example.com", "image": null } ],
     "pendingInvites": [],
     "notes": [
-      {
-        "id": "a8-0", "date": "2026-05-15", "kind": "Todo", "status": "解決済み",
-        "phase": "hearing", "isAction": true, "done": true, "priority": "normal",
-        "title": "現行の売上集計フローを確認", "text": "手入力の手順と所要時間を把握", "subtasks": []
-      },
-      {
-        "id": "a8-1", "date": "2026-06-18", "kind": "Todo", "status": "未解決",
-        "phase": "proposal", "isAction": true, "done": false, "priority": "normal",
-        "title": "POS連携の可否を確認", "text": "使用中POSのエクスポート形式を調査", "subtasks": []
-      },
-      {
-        "id": "n8-1", "date": "2026-05-25", "kind": "アイデア", "status": "未解決",
-        "phase": null, "isAction": false, "done": false, "priority": "normal",
-        "title": "前年同月比", "text": "前年比を出せると経営会議でそのまま使える", "subtasks": []
-      }
+      { "id": "a8-0", "date": "2026-05-15", "kind": "Todo", "status": "解決済み", "phase": "hearing", "isAction": true, "done": true, "priority": "normal", "title": "現行の売上集計フローを確認", "text": "手入力の手順と所要時間を把握", "subtasks": [] },
+      { "id": "a8-1", "date": "2026-06-12", "kind": "Todo", "status": "未解決", "phase": "proposal", "isAction": true, "done": false, "priority": "normal", "title": "POS連携の可否を確認", "text": "使用中POSのエクスポート形式を調査", "subtasks": [] },
+      { "id": "a8-2", "date": "2026-06-23", "kind": "Todo", "status": "未解決", "phase": "proposal", "isAction": true, "done": false, "priority": "normal", "title": "ダッシュボード項目の提案", "text": "店舗別・日別・前年比の3軸で提示", "subtasks": [] },
+      { "id": "n8-1", "date": "2026-05-25", "kind": "アイデア", "status": "未解決", "phase": null, "isAction": false, "done": false, "priority": "normal", "title": "前年同月比", "text": "前年比を出せると経営会議でそのまま使える", "subtasks": [] }
     ]
   },
   {
@@ -598,36 +255,12 @@
     ],
     "pendingInvites": [],
     "notes": [
-      {
-        "id": "a9-0", "date": "2026-05-16", "kind": "Todo", "status": "解決済み",
-        "phase": "proposal", "isAction": true, "done": true, "priority": "normal",
-        "title": "過去の問い合わせ100件を分類", "text": "よくある質問の傾向を整理", "subtasks": []
-      },
-      {
-        "id": "a9-4", "date": "2026-05-27", "kind": "Todo", "status": "解決済み",
-        "phase": "proposal", "isAction": true, "done": true, "priority": "normal",
-        "title": "回答シナリオの叩き台を作成", "text": "カテゴリ別に一次回答のテンプレを用意", "assignee": "田中 涼", "subtasks": []
-      },
-      {
-        "id": "a9-1", "date": "2026-06-03", "kind": "Todo", "status": "対応中",
-        "phase": "development", "isAction": true, "done": false, "priority": "high",
-        "title": "FAQデータの整形", "text": "過去の問い合わせ100件をQ&A形式に変換", "subtasks": []
-      },
-      {
-        "id": "a9-2", "date": "2026-06-20", "kind": "Todo", "status": "未解決",
-        "phase": "development", "isAction": true, "done": false, "priority": "normal",
-        "title": "RAGの組み込み", "text": "整形したFAQをベクトル検索に載せる", "assignee": "田中 涼", "subtasks": []
-      },
-      {
-        "id": "a9-3", "date": "2026-06-25", "kind": "Todo", "status": "未解決",
-        "phase": "development", "isAction": true, "done": false, "priority": "normal",
-        "title": "Webチャットの埋め込み", "text": "コーポレートサイトに埋め込みウィジェットを設置", "subtasks": []
-      },
-      {
-        "id": "n9-1", "date": "2026-05-29", "kind": "課題", "status": "未解決",
-        "phase": "development", "isAction": false, "done": false, "priority": "high",
-        "title": "回答できない質問の扱い", "text": "確信度が低いときは有人対応に切り替える閾値を決める必要がある。", "subtasks": []
-      }
+      { "id": "a9-0", "date": "2026-05-16", "kind": "Todo", "status": "解決済み", "phase": "proposal", "isAction": true, "done": true, "priority": "normal", "title": "過去の問い合わせ100件を分類", "text": "よくある質問の傾向を整理", "subtasks": [] },
+      { "id": "a9-4", "date": "2026-05-27", "kind": "Todo", "status": "解決済み", "phase": "proposal", "isAction": true, "done": true, "priority": "normal", "title": "回答シナリオの叩き台を作成", "text": "カテゴリ別に一次回答のテンプレを用意", "assignee": "田中 涼", "subtasks": [] },
+      { "id": "a9-1", "date": "2026-06-03", "kind": "Todo", "status": "対応中", "phase": "development", "isAction": true, "done": false, "priority": "high", "title": "FAQデータの整形", "text": "過去の問い合わせ100件をQ&A形式に変換", "subtasks": [] },
+      { "id": "a9-2", "date": "2026-06-12", "kind": "Todo", "status": "未解決", "phase": "development", "isAction": true, "done": false, "priority": "normal", "title": "RAGの組み込み", "text": "整形したFAQをベクトル検索に載せる", "assignee": "田中 涼", "subtasks": [] },
+      { "id": "a9-3", "date": "2026-06-23", "kind": "Todo", "status": "未解決", "phase": "development", "isAction": true, "done": false, "priority": "normal", "title": "Webチャットの埋め込み", "text": "コーポレートサイトに埋め込みウィジェットを設置", "subtasks": [] },
+      { "id": "n9-1", "date": "2026-05-29", "kind": "課題", "status": "未解決", "phase": "development", "isAction": false, "done": false, "priority": "high", "title": "回答できない質問の扱い", "text": "確信度が低いときは有人対応に切り替える閾値を決める必要がある。", "subtasks": [] }
     ]
   }
 ]
