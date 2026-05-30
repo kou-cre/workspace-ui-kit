@@ -79,11 +79,11 @@
     "status": "development",
     "ownerId": "u_demo",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-04-10", "description": "業務フローと現行の予約手段を確認" },
-      { "id": "proposal", "label": "提案中", "dueDate": "2026-04-25", "description": "" },
-      { "id": "development", "label": "開発中", "dueDate": "2026-05-25", "description": "予約フォームと集計バッチを実装" },
-      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
-      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
+      { "id": "hearing", "label": "要件ヒアリング", "dueDate": "2026-04-10", "description": "業務フローと現行の予約手段を確認" },
+      { "id": "proposal", "label": "設計提案", "dueDate": "2026-04-25", "description": "" },
+      { "id": "development", "label": "開発", "dueDate": "2026-05-25", "description": "予約フォームと集計バッチを実装" },
+      { "id": "delivery", "label": "受け入れテスト", "dueDate": null, "description": "" },
+      { "id": "maintenance", "label": "運用保守", "dueDate": null, "description": "" }
     ],
     "noteFolders": [
       { "id": "f1", "label": "課題ボード", "sort": "priority-desc", "filterKind": "課題", "filterStatus": null },
@@ -172,10 +172,10 @@
     "clients": ["さくら工務店"],
     "status": "proposal",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-05-10", "description": "" },
-      { "id": "proposal", "label": "提案中", "dueDate": "2026-06-02", "description": "見積ロジックと概算費用を提示" },
-      { "id": "development", "label": "開発中", "dueDate": null, "description": "" },
-      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
+      { "id": "hearing", "label": "業務ヒアリング", "dueDate": "2026-05-10", "description": "" },
+      { "id": "proposal", "label": "項目設計", "dueDate": null, "description": "見積ロジックと概算費用を提示" },
+      { "id": "development", "label": "PDF生成実装", "dueDate": null, "description": "" },
+      { "id": "delivery", "label": "納品", "dueDate": null, "description": "" },
       { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
@@ -190,8 +190,8 @@
         "title": "既存見積書を10件入手", "text": "項目の共通パターンを抽出", "subtasks": []
       },
       {
-        "id": "a2-2", "date": "2026-06-01", "kind": "Todo", "status": "未解決",
-        "phase": "proposal", "isAction": true, "done": false, "priority": "high",
+        "id": "a2-2", "date": "2026-06-18", "kind": "Todo", "status": "未解決",
+        "phase": "proposal", "isAction": true, "done": false, "priority": "normal",
         "title": "概算見積もりを送付", "text": "初期費用と月額の2パターンを提示", "subtasks": []
       },
       {
@@ -208,11 +208,11 @@
     "clients": ["株式会社ブルーオーシャン"],
     "status": "development",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-04-15", "description": "" },
-      { "id": "proposal", "label": "提案中", "dueDate": "2026-04-28", "description": "" },
-      { "id": "development", "label": "開発中", "dueDate": "2026-06-15", "description": "" },
-      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
-      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
+      { "id": "hearing", "label": "要件定義", "dueDate": "2026-04-15", "description": "" },
+      { "id": "proposal", "label": "API調査", "dueDate": "2026-04-28", "description": "" },
+      { "id": "development", "label": "同期実装", "dueDate": null, "description": "" },
+      { "id": "delivery", "label": "リリース", "dueDate": null, "description": "" },
+      { "id": "maintenance", "label": "運用監視", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
     "projectMembers": [
@@ -222,18 +222,18 @@
     "pendingInvites": [],
     "notes": [
       {
-        "id": "a3-1", "date": "2026-05-19", "kind": "Todo", "status": "未解決",
-        "phase": "development", "isAction": true, "done": false, "priority": "urgent",
-        "title": "倉庫システムのAPI調査", "text": "在庫数の取得エンドポイントが見つからず保留中", "assignee": "小林 大輔", "subtasks": []
+        "id": "a3-1", "date": "2026-05-19", "kind": "Todo", "status": "解決済み",
+        "phase": "development", "isAction": true, "done": true, "priority": "high",
+        "title": "倉庫システムのAPI調査", "text": "在庫数の取得エンドポイントを確認、ポーリング方式で確定", "assignee": "小林 大輔", "subtasks": []
       },
       {
-        "id": "a3-2", "date": "2026-05-23", "kind": "Todo", "status": "未解決",
-        "phase": "development", "isAction": true, "done": false, "priority": "high",
+        "id": "a3-2", "date": "2026-06-22", "kind": "Todo", "status": "未解決",
+        "phase": "development", "isAction": true, "done": false, "priority": "normal",
         "title": "同期ジョブの設計", "text": "5分間隔のポーリングで仮実装", "subtasks": []
       },
       {
-        "id": "n3-1", "date": "2026-05-21", "kind": "課題", "status": "未解決",
-        "phase": "development", "isAction": false, "done": false, "priority": "urgent",
+        "id": "n3-1", "date": "2026-05-21", "kind": "課題", "status": "対応中",
+        "phase": "development", "isAction": false, "done": false, "priority": "high",
         "title": "同時購入の在庫競合", "text": "店舗とECで同時に最後の1点が売れたときの引き当て順をどうするか。要設計判断。", "subtasks": []
       }
     ]
@@ -245,11 +245,11 @@
     "clients": ["ハレルヤ歯科クリニック"],
     "status": "delivery",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-03-20", "description": "" },
-      { "id": "proposal", "label": "提案中", "dueDate": "2026-04-01", "description": "" },
-      { "id": "development", "label": "開発中", "dueDate": "2026-05-10", "description": "" },
-      { "id": "delivery", "label": "納品済み", "dueDate": "2026-06-25", "description": "操作マニュアルと引き渡し" },
-      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
+      { "id": "hearing", "label": "課題整理", "dueDate": "2026-03-20", "description": "" },
+      { "id": "proposal", "label": "文面設計", "dueDate": "2026-04-01", "description": "" },
+      { "id": "development", "label": "自動送信実装", "dueDate": "2026-05-10", "description": "" },
+      { "id": "delivery", "label": "引き渡し", "dueDate": null, "description": "操作マニュアルと引き渡し" },
+      { "id": "maintenance", "label": "効果測定", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
     "projectMembers": [
@@ -286,11 +286,11 @@
     "clients": ["株式会社ノースウインド"],
     "status": "hearing",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-06-04", "description": "1日の配送件数と地域を確認" },
-      { "id": "proposal", "label": "提案中", "dueDate": null, "description": "" },
-      { "id": "development", "label": "開発中", "dueDate": null, "description": "" },
-      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
-      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
+      { "id": "hearing", "label": "現状把握", "dueDate": null, "description": "1日の配送件数と地域を確認" },
+      { "id": "proposal", "label": "データ収集", "dueDate": null, "description": "" },
+      { "id": "development", "label": "最適化ロジック", "dueDate": null, "description": "" },
+      { "id": "delivery", "label": "試験導入", "dueDate": null, "description": "" },
+      { "id": "maintenance", "label": "本格運用", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
     "projectMembers": [
@@ -301,8 +301,8 @@
     ],
     "notes": [
       {
-        "id": "a5-1", "date": "2026-06-03", "kind": "Todo", "status": "未解決",
-        "phase": "hearing", "isAction": true, "done": false, "priority": "high",
+        "id": "a5-1", "date": "2026-06-20", "kind": "Todo", "status": "未解決",
+        "phase": "hearing", "isAction": true, "done": false, "priority": "normal",
         "title": "1日の配送データを入手", "text": "直近1週間分の配送伝票をもらう", "subtasks": []
       },
       {
@@ -319,11 +319,11 @@
     "clients": ["グリーンリーフ株式会社"],
     "status": "maintenance",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-02-10", "description": "" },
-      { "id": "proposal", "label": "提案中", "dueDate": "2026-02-25", "description": "" },
-      { "id": "development", "label": "開発中", "dueDate": "2026-03-30", "description": "" },
-      { "id": "delivery", "label": "納品済み", "dueDate": "2026-04-15", "description": "" },
-      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "月次で集計レポートを更新" }
+      { "id": "hearing", "label": "指標設計", "dueDate": "2026-02-10", "description": "" },
+      { "id": "proposal", "label": "集計基盤", "dueDate": "2026-02-25", "description": "" },
+      { "id": "development", "label": "ダッシュボード", "dueDate": "2026-03-30", "description": "" },
+      { "id": "delivery", "label": "公開", "dueDate": "2026-04-15", "description": "" },
+      { "id": "maintenance", "label": "月次更新", "dueDate": null, "description": "月次で集計レポートを更新" }
     ],
     "noteFolders": [],
     "projectMembers": [
@@ -338,7 +338,7 @@
         "title": "ダッシュボード公開", "text": "解約理由を月別・年代別に可視化", "subtasks": []
       },
       {
-        "id": "a6-2", "date": "2026-06-30", "kind": "Todo", "status": "未解決",
+        "id": "a6-2", "date": "2026-06-25", "kind": "Todo", "status": "未解決",
         "phase": "maintenance", "isAction": true, "done": false, "priority": "low",
         "title": "5月分のレポート更新", "text": "月初に集計を回して共有", "subtasks": []
       },
@@ -357,7 +357,7 @@
     "status": "development",
     "milestones": [
       { "id": "planning", "label": "企画", "dueDate": null, "description": "" },
-      { "id": "development", "label": "開発中", "dueDate": "2026-06-03", "description": "カレンダー連携とタイムライン" },
+      { "id": "development", "label": "開発", "dueDate": null, "description": "カレンダー連携とタイムライン" },
       { "id": "release", "label": "リリース", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
@@ -367,7 +367,7 @@
     "pendingInvites": [],
     "notes": [
       {
-        "id": "a7-1", "date": "2026-06-02", "kind": "Todo", "status": "対応中",
+        "id": "a7-1", "date": "2026-06-15", "kind": "Todo", "status": "対応中",
         "phase": "development", "isAction": true, "done": false, "priority": "normal",
         "title": "日次タイムラインの仕上げ", "text": "時間指定タスクの重なりレーン表示", "subtasks": []
       },
@@ -386,9 +386,9 @@
     "status": "proposal",
     "milestones": [
       { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-05-20", "description": "" },
-      { "id": "proposal", "label": "提案中", "dueDate": null, "description": "" },
-      { "id": "development", "label": "開発中", "dueDate": null, "description": "" },
-      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
+      { "id": "proposal", "label": "連携設計", "dueDate": null, "description": "" },
+      { "id": "development", "label": "実装", "dueDate": null, "description": "" },
+      { "id": "delivery", "label": "納品", "dueDate": null, "description": "" },
       { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
@@ -416,11 +416,11 @@
     "clients": ["さくら工務店"],
     "status": "development",
     "milestones": [
-      { "id": "hearing", "label": "ヒアリング", "dueDate": "2026-04-30", "description": "" },
-      { "id": "proposal", "label": "提案中", "dueDate": "2026-05-12", "description": "" },
-      { "id": "development", "label": "開発中", "dueDate": "2026-06-10", "description": "" },
-      { "id": "delivery", "label": "納品済み", "dueDate": null, "description": "" },
-      { "id": "maintenance", "label": "保守", "dueDate": null, "description": "" }
+      { "id": "hearing", "label": "FAQ整理", "dueDate": "2026-04-30", "description": "" },
+      { "id": "proposal", "label": "シナリオ設計", "dueDate": "2026-05-12", "description": "" },
+      { "id": "development", "label": "構築", "dueDate": null, "description": "" },
+      { "id": "delivery", "label": "試験運用", "dueDate": null, "description": "" },
+      { "id": "maintenance", "label": "本番公開", "dueDate": null, "description": "" }
     ],
     "noteFolders": [],
     "projectMembers": [
@@ -430,17 +430,17 @@
     "pendingInvites": [],
     "notes": [
       {
-        "id": "a9-1", "date": "2026-05-31", "kind": "Todo", "status": "未解決",
+        "id": "a9-1", "date": "2026-06-03", "kind": "Todo", "status": "対応中",
         "phase": "development", "isAction": true, "done": false, "priority": "high",
         "title": "FAQデータの整形", "text": "過去の問い合わせ100件をQ&A形式に変換", "subtasks": []
       },
       {
-        "id": "a9-2", "date": "2026-06-02", "kind": "Todo", "status": "未解決",
-        "phase": "development", "isAction": true, "done": false, "priority": "high",
+        "id": "a9-2", "date": "2026-06-20", "kind": "Todo", "status": "未解決",
+        "phase": "development", "isAction": true, "done": false, "priority": "normal",
         "title": "RAGの組み込み", "text": "整形したFAQをベクトル検索に載せる", "assignee": "田中 涼", "subtasks": []
       },
       {
-        "id": "a9-3", "date": "2026-06-04", "kind": "Todo", "status": "未解決",
+        "id": "a9-3", "date": "2026-06-25", "kind": "Todo", "status": "未解決",
         "phase": "development", "isAction": true, "done": false, "priority": "normal",
         "title": "Webチャットの埋め込み", "text": "コーポレートサイトに埋め込みウィジェットを設置", "subtasks": []
       },
