@@ -29,6 +29,8 @@ const nextConfig: NextConfig = {
     root: projectRoot,
   },
   outputFileTracingRoot: projectRoot,
+  // Claude Agent SDK は claude CLI をサブプロセス起動するため、バンドルせず外部化する。
+  serverExternalPackages: ["@anthropic-ai/claude-agent-sdk"],
 };
 
 export default nextConfig;

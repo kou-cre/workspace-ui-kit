@@ -45,7 +45,9 @@ import {
 } from "@/lib/schema";
 import { type ComboOption } from "@/components/primitives/InlineComboboxField";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 import { GlobalHeader } from "@/components/workspace/GlobalHeader";
+import { AssistantPane } from "@/components/workspace/AssistantPane";
 import { MilestoneDetailPane } from "@/components/workspace/MilestoneDetailPane";
 import { NoteFolderDetailPane } from "@/components/workspace/NoteFolderDetailPane";
 import { ProjectListPane } from "@/components/workspace/ProjectListPane";
@@ -172,6 +174,8 @@ type WorkspaceProps = {
 };
 
 export function Workspace({ initialProjects, workspace, user, onSignOut, googleCalendarEvents = [], initialUserSetting }: WorkspaceProps) {
+  const router = useRouter();
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [workStartTime, setWorkStartTime] = useState<string>(
     initialUserSetting?.workStartTime ?? DEFAULT_WORK_START_TIME,
@@ -1539,7 +1543,27 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
           onSelectNote={navigateToNote}
           user={user}
           onSignOut={onSignOut}
+          onOpenAssistant={
+            selectedView !== "personal" && activeProject
+              ? () => setAssistantOpen(true)
+              : undefined
+          }
         />
+
+        {activeProject && (
+          <AssistantPane
+            open={assistantOpen}
+            onOpenChange={setAssistantOpen}
+            projectId={activeProject.id}
+            projectName={activeProject.name}
+            currentDescription={activeProject.description}
+            existingMilestones={activeProject.milestones.map((m) => ({
+              id: m.id,
+              label: m.label,
+            }))}
+            onCommitted={() => router.refresh()}
+          />
+        )}
 
         {/* ─── デスクトップレイアウト (lg+) ─── */}
         <div className="hidden lg:flex min-h-0 flex-1">

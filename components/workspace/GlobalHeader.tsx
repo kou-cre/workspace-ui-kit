@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Briefcase, FileText, Search, LogOut } from "lucide-react";
+import { Briefcase, FileText, Search, LogOut, Sparkles } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -45,6 +45,7 @@ type GlobalHeaderProps = {
   onSelectNote: (noteId: string, projectId: string) => void;
   user?: SessionUser;
   onSignOut?: () => Promise<void>;
+  onOpenAssistant?: () => void;
 };
 
 export function GlobalHeader({
@@ -55,6 +56,7 @@ export function GlobalHeader({
   onSelectNote,
   user,
   onSignOut,
+  onOpenAssistant,
 }: GlobalHeaderProps) {
   const [open, setOpen] = useState(false);
 
@@ -93,6 +95,19 @@ export function GlobalHeader({
           )}
         </BreadcrumbList>
       </Breadcrumb>
+
+      {onOpenAssistant && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onOpenAssistant}
+          className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
+          aria-label="AIアシスタント"
+        >
+          <Sparkles className="size-3.5" />
+          <span className="hidden sm:inline">アシスタント</span>
+        </Button>
+      )}
 
       <Button
         variant="ghost"
