@@ -17,6 +17,7 @@ import { createNote, createSubtask } from "@/lib/actions/notes";
 import { updateProject } from "@/lib/actions/projects";
 import type {
   ProposedItem,
+  ProposedItemChange,
   ProposedMilestone,
   ProposedProjectUpdate,
 } from "@/lib/brainDump/schema";
@@ -31,6 +32,7 @@ export async function commitBrainDump(input: {
   projectId: string;
   milestones: ProposedMilestone[];
   items: ProposedItem[];
+  itemChanges?: ProposedItemChange[];
   projectUpdate?: ProposedProjectUpdate | null;
 }): Promise<{ milestoneIdMap: Record<string, string>; noteIds: string[] }> {
   const session = await auth();
@@ -83,6 +85,34 @@ export async function commitBrainDump(input: {
       if (st.trim()) await createSubtask(id, st);
     }
     noteIds.push(id);
+  }
+
+  // 3) 既存項目の再配置（承認済みのみ）。対象は本プロジェクトの Note に限定する。
+  const changes = input.itemChanges ?? [];
+  if (changes.length > 0) {
+    const projectNotes = await db.note.findMany({
+      where: { projectId: input.projectId },
+      select: { id: true },
+    });
+    const projectNoteIds = new Set(projectNotes.map((n) => n.id));
+
+    for (const ch of changes) {
+      if (!projectNoteIds.has(ch.noteId)) continue; // 別プロジェクトのノートは触らない
+      if (ch.action === "toMemo") {
+        // マイルストーンから外してメモ化（todo性を解除）
+        await db.note.update({
+          where: { id: ch.noteId },
+          data: { phase: null, kind: "メモ", isAction: false },
+        });
+      } else {
+        // reassign: 移動先を解決（新規tempId→実ID / 既存マイルストーンID / それ以外は null＝メモ欄）
+        const target = ch.targetMilestone
+          ? (milestoneIdMap[ch.targetMilestone] ??
+            (existingIds.has(ch.targetMilestone) ? ch.targetMilestone : null))
+          : null;
+        await db.note.update({ where: { id: ch.noteId }, data: { phase: target } });
+      }
+    }
   }
 
   revalidatePath("/");

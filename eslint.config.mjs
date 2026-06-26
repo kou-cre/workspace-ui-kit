@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // AI生成サイドカーは独立した別プロジェクト（自前 package.json・Node 実行）。
+    "sidecar/**",
   ]),
 ]);
 

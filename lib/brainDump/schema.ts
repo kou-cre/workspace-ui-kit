@@ -43,11 +43,29 @@ export const proposedProjectUpdateSchema = z.object({
 });
 export type ProposedProjectUpdate = z.infer<typeof proposedProjectUpdateSchema>;
 
+/** 既存メモ/todo の再配置操作。reassign=別マイルストーンへ / toMemo=外してメモ化。 */
+export const itemChangeActionSchema = z.enum(["reassign", "toMemo"]);
+export type ItemChangeAction = z.infer<typeof itemChangeActionSchema>;
+
+/**
+ * AI が提案する「既存項目の構成変更」。進捗が停滞しているときのマイルストーン再構成に使う。
+ * noteId は文脈に出した既存 Note の id を参照する。
+ */
+export const proposedItemChangeSchema = z.object({
+  noteId: z.string(),
+  noteTitle: z.string().default(""),
+  action: itemChangeActionSchema.default("reassign"),
+  targetMilestone: z.string().nullable().default(null),
+  reason: z.string().default(""),
+});
+export type ProposedItemChange = z.infer<typeof proposedItemChangeSchema>;
+
 /** アシスタントの1ターン応答（会話文 ＋ 任意の登録提案・概要更新案）。 */
 export const assistantTurnSchema = z.object({
   reply: z.string(),
   milestones: z.array(proposedMilestoneSchema).default([]),
   items: z.array(proposedItemSchema).default([]),
+  itemChanges: z.array(proposedItemChangeSchema).default([]),
   projectUpdate: proposedProjectUpdateSchema.nullable().default(null),
 });
 export type AssistantTurn = z.infer<typeof assistantTurnSchema>;

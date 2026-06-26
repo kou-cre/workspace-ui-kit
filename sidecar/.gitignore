@@ -1,0 +1,5 @@
+# サイドカーの依存（claude CLI 約215MB を含む）はコミットしない。Mac で `npm install` する。
+node_modules/
+
+# 共有シークレットなどローカル設定（コミット禁止）
+.env.local

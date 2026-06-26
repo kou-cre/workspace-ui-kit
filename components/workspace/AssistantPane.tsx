@@ -29,24 +29,42 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { InlineTextField } from "@/components/primitives/InlineTextField";
 import { InlineTextareaField } from "@/components/primitives/InlineTextareaField";
 import { InlineDateField } from "@/components/primitives/InlineDateField";
+import { ChatMarkdown } from "@/components/workspace/ChatMarkdown";
+import {
+  ASSISTANT_MODELS,
+  DEFAULT_MODEL,
+  modelLabel,
+  type AssistantModelId,
+} from "@/lib/brainDump/models";
 
 import { commitBrainDump } from "@/lib/actions/brainDump";
 import type {
   ChatTurn,
   ProposedItem,
+  ProposedItemChange,
   ProposedMilestone,
   ProposedProjectUpdate,
   AssistantTurn,
 } from "@/lib/brainDump/schema";
+
+/** マイルストーン再構成の移動先 Select で「メモ欄へ外す（toMemo）」を表す番兵値。 */
+const MEMO_VALUE = "__memo__";
 
 type Accepted<T> = T & { accepted: boolean };
 
 type ProposalState = {
   milestones: Accepted<ProposedMilestone>[];
   items: Accepted<ProposedItem>[];
+  itemChanges: Accepted<ProposedItemChange>[];
   projectUpdate: Accepted<ProposedProjectUpdate> | null;
   committed: boolean;
 };
@@ -65,16 +83,21 @@ type AssistantPaneProps = {
   projectName: string;
   currentDescription: string;
   existingMilestones: { id: string; label: string }[];
-  onCommitted: () => void;
+  existingNotes: { id: string; title: string; phase: string | null }[];
+  onCommitted: (projectId: string) => void | Promise<void>;
 };
 
 function toProposal(turn: AssistantTurn): ProposalState | null {
   const has =
-    turn.milestones.length > 0 || turn.items.length > 0 || turn.projectUpdate !== null;
+    turn.milestones.length > 0 ||
+    turn.items.length > 0 ||
+    turn.itemChanges.length > 0 ||
+    turn.projectUpdate !== null;
   if (!has) return null;
   return {
     milestones: turn.milestones.map((m) => ({ ...m, accepted: true })),
     items: turn.items.map((it) => ({ ...it, accepted: true })),
+    itemChanges: turn.itemChanges.map((c) => ({ ...c, accepted: true })),
     projectUpdate: turn.projectUpdate ? { ...turn.projectUpdate, accepted: true } : null,
     committed: false,
   };
@@ -93,11 +116,13 @@ export function AssistantPane({
   projectName,
   currentDescription,
   existingMilestones,
+  existingNotes,
   onCommitted,
 }: AssistantPaneProps) {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [model, setModel] = useState<AssistantModelId>(DEFAULT_MODEL);
   const [committingId, setCommittingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -127,7 +152,7 @@ export function AssistantPane({
       const res = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId, messages: history }),
+        body: JSON.stringify({ projectId, messages: history, model }),
       });
       const data = (await res.json()) as AssistantTurn | { error: string };
       if ("error" in data) throw new Error(data.error);
@@ -148,16 +173,23 @@ export function AssistantPane({
     if (!p || p.committed) return;
     const milestones = p.milestones.filter((m) => m.accepted).map(strip<ProposedMilestone>);
     const items = p.items.filter((it) => it.accepted).map(strip<ProposedItem>);
+    const itemChanges = p.itemChanges.filter((c) => c.accepted).map(strip<ProposedItemChange>);
     const projectUpdate =
       p.projectUpdate?.accepted ? strip<ProposedProjectUpdate>(p.projectUpdate) : null;
-    if (milestones.length === 0 && items.length === 0 && !projectUpdate) return;
+    if (
+      milestones.length === 0 &&
+      items.length === 0 &&
+      itemChanges.length === 0 &&
+      !projectUpdate
+    )
+      return;
 
     setError(null);
     setCommittingId(entryId);
     try {
-      await commitBrainDump({ projectId, milestones, items, projectUpdate });
+      await commitBrainDump({ projectId, milestones, items, itemChanges, projectUpdate });
       updateProposal(entryId, (pp) => ({ ...pp, committed: true }));
-      onCommitted();
+      await onCommitted(projectId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "登録に失敗しました。");
     } finally {
@@ -214,8 +246,8 @@ export function AssistantPane({
                 </div>
               ) : (
                 <div key={entry.id} className="flex flex-col gap-3">
-                  <div className="max-w-[90%] rounded-lg bg-card px-3 py-2 text-sm whitespace-pre-wrap text-card-foreground">
-                    {entry.text}
+                  <div className="max-w-[90%] rounded-lg bg-card px-3 py-2 text-sm text-card-foreground">
+                    <ChatMarkdown text={entry.text} />
                   </div>
                   {entry.proposal && (
                     <ProposalBlock
@@ -223,6 +255,7 @@ export function AssistantPane({
                       proposal={entry.proposal}
                       currentDescription={currentDescription}
                       existingMilestones={existingMilestones}
+                      existingNotes={existingNotes}
                       committing={committingId === entry.id}
                       onUpdate={updateProposal}
                       onCommit={commit}
@@ -248,6 +281,26 @@ export function AssistantPane({
               {error}
             </p>
           )}
+          <div className="flex items-center gap-2">
+            <Select
+              value={model}
+              onValueChange={(v) => v && setModel(v as AssistantModelId)}
+              disabled={sending}
+            >
+              <SelectTrigger size="sm" aria-label="AIモデル" className="bg-card">
+                <Sparkles className="size-3.5 text-muted-foreground" />
+                {modelLabel(model)}
+              </SelectTrigger>
+              <SelectContent align="start">
+                {ASSISTANT_MODELS.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    <span className="font-medium">{m.label}</span>
+                    <span className="text-xs text-muted-foreground">{m.hint}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-end gap-2">
             <Textarea
               value={input}
@@ -299,6 +352,7 @@ function ProposalBlock({
   proposal,
   currentDescription,
   existingMilestones,
+  existingNotes,
   committing,
   onUpdate,
   onCommit,
@@ -307,6 +361,7 @@ function ProposalBlock({
   proposal: ProposalState;
   currentDescription: string;
   existingMilestones: { id: string; label: string }[];
+  existingNotes: { id: string; title: string; phase: string | null }[];
   committing: boolean;
   onUpdate: (entryId: string, fn: (p: ProposalState) => ProposalState) => void;
   onCommit: (entryId: string) => void;
@@ -314,6 +369,7 @@ function ProposalBlock({
   const acceptedCount =
     proposal.milestones.filter((m) => m.accepted).length +
     proposal.items.filter((it) => it.accepted).length +
+    proposal.itemChanges.filter((c) => c.accepted).length +
     (proposal.projectUpdate?.accepted ? 1 : 0);
 
   const plainMilestones = proposal.milestones.map(strip<ProposedMilestone>);
@@ -479,6 +535,89 @@ function ProposalBlock({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* マイルストーン再構成（既存項目の再配置） */}
+      {proposal.itemChanges.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-medium text-muted-foreground">マイルストーン再構成</p>
+          {proposal.itemChanges.map((ch, idx) => {
+            const currentPhase = existingNotes.find((n) => n.id === ch.noteId)?.phase ?? null;
+            const currentLabel = currentPhase
+              ? (existingMilestones.find((m) => m.id === currentPhase)?.label ?? "別マイルストーン")
+              : "メモ欄";
+            const destValue =
+              ch.action === "toMemo" ? MEMO_VALUE : (ch.targetMilestone ?? MEMO_VALUE);
+            const destLabel =
+              destValue === MEMO_VALUE
+                ? "メモ欄へ外す"
+                : (existingMilestones.find((m) => m.id === destValue)?.label ?? "移動先");
+            const title =
+              ch.noteTitle.trim() ||
+              existingNotes.find((n) => n.id === ch.noteId)?.title.trim() ||
+              "（無題の項目）";
+            return (
+              <div key={idx} className="flex gap-2">
+                <Checkbox
+                  className="mt-0.5"
+                  checked={ch.accepted}
+                  disabled={proposal.committed}
+                  onCheckedChange={(v) =>
+                    onUpdate(entryId, (p) => ({
+                      ...p,
+                      itemChanges: p.itemChanges.map((x, i) =>
+                        i === idx ? { ...x, accepted: Boolean(v) } : x,
+                      ),
+                    }))
+                  }
+                  aria-label="再配置を採用"
+                />
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <p className="text-sm font-medium">{title}</p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge variant="outline">現在: {currentLabel}</Badge>
+                    <span aria-hidden className="text-xs text-muted-foreground">
+                      →
+                    </span>
+                    {proposal.committed ? (
+                      <Badge variant="secondary">{destLabel}</Badge>
+                    ) : (
+                      <Select
+                        value={destValue}
+                        onValueChange={(v) =>
+                          v &&
+                          onUpdate(entryId, (p) => ({
+                            ...p,
+                            itemChanges: p.itemChanges.map((x, i) =>
+                              i === idx
+                                ? v === MEMO_VALUE
+                                  ? { ...x, action: "toMemo" as const, targetMilestone: null }
+                                  : { ...x, action: "reassign" as const, targetMilestone: v }
+                                : x,
+                            ),
+                          }))
+                        }
+                      >
+                        <SelectTrigger size="sm" aria-label="移動先" className="bg-card">
+                          {destLabel}
+                        </SelectTrigger>
+                        <SelectContent align="start">
+                          {existingMilestones.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.label}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={MEMO_VALUE}>メモ欄へ外す</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  {ch.reason && <p className="text-xs text-muted-foreground">{ch.reason}</p>}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

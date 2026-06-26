@@ -3,6 +3,53 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { projectSchema, type Project } from "@/lib/schema";
+
+/**
+ * 1プロジェクトの最新状態をサーバから取り直す（page.tsx と同じ include / map）。
+ * アシスタント承認などサーバ変更の直後に、クライアント state を即時に同期するために使う
+ * （`useState(initialProjects)` は router.refresh() のプロップ変更を拾わないため）。
+ */
+export async function fetchProjectById(projectId: string): Promise<Project | null> {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  const p = await db.project.findFirst({
+    where: {
+      id: projectId,
+      OR: [
+        { userId: session.user.id },
+        { projectMembers: { some: { userId: session.user.id } } },
+      ],
+    },
+    include: {
+      milestones: { orderBy: { order: "asc" } },
+      noteFolders: { orderBy: { order: "asc" } },
+      notes: {
+        include: { subtasks: { orderBy: { order: "asc" } } },
+        orderBy: { order: "asc" },
+      },
+      projectMembers: { include: { user: true } },
+      pendingInvites: true,
+    },
+  });
+  if (!p) return null;
+
+  const mapped = {
+    ...p,
+    projectMembers: p.projectMembers.map((pm) => ({
+      id: pm.id,
+      userId: pm.userId,
+      name: pm.user.name,
+      email: pm.user.email,
+      image: pm.user.image,
+    })),
+    pendingInvites: p.pendingInvites.map((inv) => ({ id: inv.id, email: inv.email })),
+  };
+
+  const parsed = projectSchema.safeParse(mapped);
+  return parsed.success ? parsed.data : null;
+}
 
 export type InviteResult =
   | { ok: true; member: { id: string; userId: string; name: string | null; email: string | null; image: string | null } }

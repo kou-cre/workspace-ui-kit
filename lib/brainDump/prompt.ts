@@ -24,6 +24,7 @@ const KIND_LABEL: Record<string, string> = {
 type ContextProject = { name: string; description: string };
 type ContextMilestone = { id: string; label: string; dueDate: string | null };
 type ContextNote = {
+  id: string;
   kind: string;
   status: string;
   title: string;
@@ -58,7 +59,7 @@ export function buildContextBlock(
     const head = n.title.trim() || n.text.trim().slice(0, 24) || "（無題）";
     const body = n.text.trim().slice(0, NOTE_TEXT_CLAMP);
     const date = n.isAction && n.date ? ` @${n.date}` : "";
-    return `    - [${KIND_LABEL[n.kind] ?? n.kind}/${n.status}] ${head}${date}${body && body !== head ? ` — ${body}` : ""}`;
+    return `    - noteId="${n.id}" [${KIND_LABEL[n.kind] ?? n.kind}/${n.status}] ${head}${date}${body && body !== head ? ` — ${body}` : ""}`;
   };
 
   lines.push(`- 既存メモ/todo（${notes.length}件）:`);
@@ -91,6 +92,8 @@ export function buildSystemPrompt(contextBlock: string): string {
     "2. 整理・登録提案: 雑なメモの整理依頼、明確な登録依頼（「これをtodoにして」等）、または相談の結論が",
     "   出たときに、ワークスペースへの登録案（メモ/todo/マイルストーン）を提案する。",
     "3. 概要の更新提案: 会話からプロジェクトの状況が変わった/概要が古いと判断したら、新しい概要全文を提案する。",
+    "4. マイルストーン構成の見直し提案: ユーザーが進捗の停滞・遅れ・不満を口にしたら、現在のマイルストーン構成を",
+    "   分析し、既存の todo/メモの再配置を itemChanges で提案する。各提案には推奨理由（reason）を必ず添える。",
     "",
     "# 5種別メモ",
     "- Todo: これからやる作業 / アイデア: 思いつき・改善案 / 議論余地: 要相談・要確認",
@@ -102,6 +105,13 @@ export function buildSystemPrompt(contextBlock: string): string {
     "- Todo は必要に応じて subtasks に分解してよいが、原文の範囲に留め、作りすぎない。",
     "- 特定の日に行う予定だけ isAction=true とし date を入れる。日付は自然文（来週金曜・今月末 等）のままでよい（コード側で正規化する）。",
     "- 原文に書かれていない作業を創作しない。勝手に登録・更新はしない（承認はアプリ側でユーザーが行う）。提案に留める。",
+    "",
+    "# マイルストーン再構成ルール（itemChanges）",
+    "- 進捗の停滞・遅れ・不満が示されたときだけ提案する。通常の相談では空配列にする。",
+    "- 対象は文脈に出ている既存項目のみ。noteId は文脈の noteId=\"...\" をそのまま使う（新規作成は items 側で行う）。",
+    "- action は2種: \"reassign\"（より適切なマイルストーンへ移す。targetMilestone に移動先の既存Milestone.id）、",
+    "  \"toMemo\"（マイルストーンから外してメモ欄へ。targetMilestone は null）。",
+    "- 1項目につき推奨を1つだけ出し、reason に「なぜそれを勧めるか」を簡潔に書く。最終決定はユーザーが行う。",
     "",
     "# 出力フォーマット（厳守）",
     "次のJSONオブジェクトだけを出力する。前置き・説明・コードフェンス（```）は一切付けない。",
@@ -118,9 +128,16 @@ export function buildSystemPrompt(contextBlock: string): string {
     '    "isAction": false,',
     '    "date": "yyyy-MM-dd か自然文 か 空文字"',
     "  } ],",
+    '  "itemChanges": [ {',
+    '    "noteId": "文脈の既存 noteId",',
+    '    "noteTitle": "対象の見出し（表示用）",',
+    '    "action": "reassign|toMemo",',
+    '    "targetMilestone": "reassign時の移動先Milestone.id（toMemoはnull）",',
+    '    "reason": "なぜこの再配置を勧めるか"',
+    "  } ],",
     '  "projectUpdate": { "description": "更新後の概要全文" }',
     "}",
-    "- 提案がないとき（普通の相談）は milestones:[], items:[], projectUpdate:null とし、reply だけ書く。",
+    "- 提案がないとき（普通の相談）は milestones:[], items:[], itemChanges:[], projectUpdate:null とし、reply だけ書く。",
     "- JSONの文字列内の改行は \\n でエスケープする。有効なJSONとして必ずパースできる形にする。",
     "",
     "# 現在のワークスペース文脈",
@@ -155,6 +172,7 @@ export function normalizeTurn(turn: AssistantTurn, today: Date): AssistantTurn {
       dueDate: m.dueDate ? normalizeDate(m.dueDate, today) || null : null,
     })),
     items: turn.items.map((it) => ({ ...it, date: normalizeDate(it.date, today) })),
+    itemChanges: turn.itemChanges,
     projectUpdate: turn.projectUpdate,
   };
 }

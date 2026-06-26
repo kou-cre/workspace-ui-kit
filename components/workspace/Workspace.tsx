@@ -67,6 +67,7 @@ import {
   inviteCollaborator as inviteCollaboratorAction,
   removeCollaborator as removeCollaboratorAction,
   removePendingInvite as removePendingInviteAction,
+  fetchProjectById,
   type InviteResult,
 } from "@/lib/actions/projects";
 import {
@@ -1561,7 +1562,22 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
               id: m.id,
               label: m.label,
             }))}
-            onCommitted={() => router.refresh()}
+            existingNotes={activeProject.notes.map((n) => ({
+              id: n.id,
+              title: n.title,
+              phase: n.phase,
+            }))}
+            onCommitted={async (committedProjectId) => {
+              // useState(initialProjects) は router.refresh() のプロップ変更を拾わないため、
+              // サーバから取り直してクライアント state を即時に差し替える（リロード不要）。
+              const fresh = await fetchProjectById(committedProjectId);
+              if (fresh) {
+                setProjects((prev) =>
+                  prev.map((p) => (p.id === fresh.id ? fresh : p)),
+                );
+              }
+              router.refresh();
+            }}
           />
         )}
 

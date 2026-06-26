@@ -29,8 +29,8 @@ const nextConfig: NextConfig = {
     root: projectRoot,
   },
   outputFileTracingRoot: projectRoot,
-  // Claude Agent SDK は claude CLI をサブプロセス起動するため、バンドルせず外部化する。
-  serverExternalPackages: ["@anthropic-ai/claude-agent-sdk"],
+  // AI生成は Mac 常駐サイドカー（sidecar/）へ HTTP 委譲するため、Vercel 側は claude CLI を
+  // 一切バンドルしない。約212MBの CLI バイナリが関数に載らず 250MB 上限を超えない（DEPLOY.md）。
 };
 
 export default nextConfig;
