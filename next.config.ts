@@ -8,6 +8,15 @@ import path from "node:path";
 const projectRoot = path.resolve(__dirname);
 
 const nextConfig: NextConfig = {
+  // AI機能（app/api/assistant・connection）はローカル開発サーバー専用。
+  // Claude Agent SDK を外部パッケージ扱いにし、各プラットフォームの claude CLI
+  // バイナリ（約212MB）を Vercel 関数（250MB上限）のトレースから除外する。
+  // 本番(Vercel)では両ルートが process.env.VERCEL で弾かれ SDK を import しない。
+  serverExternalPackages: ["@anthropic-ai/claude-agent-sdk"],
+  outputFileTracingExcludes: {
+    "/api/assistant": ["node_modules/@anthropic-ai/claude-agent-sdk-*/**"],
+    "/api/connection": ["node_modules/@anthropic-ai/claude-agent-sdk-*/**"],
+  },
   webpack: (config) => {
     // Google Drive パスに "@" が含まれるため enhanced-resolve がモジュール解決に失敗する。
     // process.cwd() はシンボリックリンクを解決しないので "@" を含まないパスになる。
@@ -29,8 +38,6 @@ const nextConfig: NextConfig = {
     root: projectRoot,
   },
   outputFileTracingRoot: projectRoot,
-  // AI生成は Mac 常駐サイドカー（sidecar/）へ HTTP 委譲するため、Vercel 側は claude CLI を
-  // 一切バンドルしない。約212MBの CLI バイナリが関数に載らず 250MB 上限を超えない（DEPLOY.md）。
 };
 
 export default nextConfig;

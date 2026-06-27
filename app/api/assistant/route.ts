@@ -9,19 +9,62 @@ import {
   normalizeTurn,
   todayIsoOf,
 } from "@/lib/brainDump/prompt";
-import { callSidecar } from "@/lib/brainDump/sidecar";
-import { isAssistantModel, DEFAULT_MODEL } from "@/lib/brainDump/models";
+import { isAssistantModel, DEFAULT_MODEL, type AssistantModelId } from "@/lib/brainDump/models";
 
-// Prisma を使うため Node ランタイム必須。AI生成自体は Mac 常駐サイドカーへ委譲する
-// （claude CLI＝サブスク枠の212MBバイナリは Vercel 関数に載らないため。詳細は DEPLOY.md）。
+// Claude Agent SDK は claude CLI（約212MBのネイティブバイナリ）をサブプロセス起動するため
+// Node ランタイム必須。APIキー（従量課金）は使わず、ローカルの `claude` ログイン（OAuth＝
+// サブスク枠）を継承する。212MB バイナリは Vercel 関数（250MB上限）に載らないので、
+// AI機能は「ローカル開発サーバー専用」。本番(Vercel)では下の VERCEL ガードで弾く。
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// サイドカーの生成完了を待つ。Vercel Hobby は最大60秒。
-export const maxDuration = 60;
 
 type Body = { projectId?: string; messages?: ChatTurn[]; model?: string };
 
+async function runQuery(
+  prompt: string,
+  systemPrompt: string,
+  model: AssistantModelId,
+): Promise<string> {
+  // 動的 import：静的依存にせず、Vercel 関数へ 212MB バイナリを載せない
+  // （next.config の serverExternalPackages / outputFileTracingExcludes と併用）。
+  const { query } = await import("@anthropic-ai/claude-agent-sdk");
+  const q = query({
+    prompt,
+    options: {
+      model,
+      systemPrompt,
+      settingSources: [],
+      allowedTools: [],
+      maxTurns: 1,
+      cwd: process.cwd(),
+    },
+  });
+
+  let text = "";
+  for await (const m of q) {
+    if (m.type === "assistant") {
+      for (const block of m.message.content) {
+        if (block.type === "text") text += block.text;
+      }
+    } else if (m.type === "result") {
+      if (m.subtype === "success" && typeof m.result === "string") text = m.result;
+    }
+  }
+  return text.trim();
+}
+
 export async function POST(req: Request) {
+  // AIはローカル開発専用。本番(Vercel)は claude CLI が無いので明示的に弾く。
+  if (process.env.VERCEL) {
+    return NextResponse.json(
+      {
+        error: "AI機能はローカル開発サーバーでのみ利用できます。",
+        hint: "ローカルで `npm run dev` を起動して使ってください（claude ログイン継承・サブスク枠）。",
+      },
+      { status: 200 },
+    );
+  }
+
   let body: Body;
   try {
     body = (await req.json()) as Body;
@@ -87,7 +130,7 @@ export async function POST(req: Request) {
         attempt === 0
           ? basePrompt
           : `${basePrompt}\n\n（注意：前回の出力はJSONとして解釈できませんでした。前置きもコードフェンスも付けず、有効なJSONオブジェクトだけを出力してください。）`;
-      const text = await callSidecar({ prompt, systemPrompt, model });
+      const text = await runQuery(prompt, systemPrompt, model);
       turn = parseAssistantTurn(text);
     }
 
@@ -103,7 +146,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: err instanceof Error ? err.message : String(err),
-        hint: "AI生成を担う Mac 常駐サイドカーに接続できませんでした。Mac が起動しサービス／トンネルが動いているか、Vercel の SIDECAR_URL・SIDECAR_SECRET が正しいか確認してください（APIキーは不要・サブスク枠）。",
+        hint: "ローカルで `claude` にログイン済みか確認してください（APIキーは不要・サブスク枠で動きます）。",
       },
       { status: 200 },
     );
