@@ -48,6 +48,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 import { GlobalHeader } from "@/components/workspace/GlobalHeader";
 import { AssistantPane } from "@/components/workspace/AssistantPane";
+import type { AssistantTurn } from "@/lib/brainDump/schema";
 import { MilestoneDetailPane } from "@/components/workspace/MilestoneDetailPane";
 import { NoteFolderDetailPane } from "@/components/workspace/NoteFolderDetailPane";
 import { ProjectListPane } from "@/components/workspace/ProjectListPane";
@@ -172,9 +173,11 @@ type WorkspaceProps = {
   onSignOut?: () => Promise<void>;
   googleCalendarEvents?: GoogleCalendarEvent[];
   initialUserSetting?: UserSetting;
+  /** DEMO_MODE 用の作り込みアシスタント会話（紹介/スクショ用）。本番では undefined。 */
+  demoAssistantSeed?: { userText: string; turn: AssistantTurn } | null;
 };
 
-export function Workspace({ initialProjects, workspace, user, onSignOut, googleCalendarEvents = [], initialUserSetting }: WorkspaceProps) {
+export function Workspace({ initialProjects, workspace, user, onSignOut, googleCalendarEvents = [], initialUserSetting, demoAssistantSeed }: WorkspaceProps) {
   const router = useRouter();
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
@@ -1555,6 +1558,7 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
           <AssistantPane
             open={assistantOpen}
             onOpenChange={setAssistantOpen}
+            demoSeed={demoAssistantSeed ?? null}
             projectId={activeProject.id}
             projectName={activeProject.name}
             currentDescription={activeProject.description}

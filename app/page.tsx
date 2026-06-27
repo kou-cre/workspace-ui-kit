@@ -3,6 +3,7 @@ import { Workspace } from "@/components/workspace/Workspace";
 import workspaceData from "@/data/workspace.json";
 import demoProjectsData from "@/data/demo-projects.json";
 import demoCalendarData from "@/data/demo-calendar.json";
+import { DEMO_ASSISTANT_SEED } from "@/data/demo-assistant";
 import { auth, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import {
@@ -51,6 +52,7 @@ async function renderDemoWorkspace() {
       onSignOut={handleSignOut}
       googleCalendarEvents={googleCalendarEvents}
       initialUserSetting={userSetting}
+      demoAssistantSeed={DEMO_ASSISTANT_SEED}
     />
   );
 }

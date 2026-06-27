@@ -85,6 +85,8 @@ type AssistantPaneProps = {
   existingMilestones: { id: string; label: string }[];
   existingNotes: { id: string; title: string; phase: string | null }[];
   onCommitted: (projectId: string) => void | Promise<void>;
+  /** DEMO_MODE 用の作り込み会話（紹介/スクショ用）。本番では渡さないので挙動に影響しない。 */
+  demoSeed?: { userText: string; turn: AssistantTurn } | null;
 };
 
 function toProposal(turn: AssistantTurn): ProposalState | null {
@@ -118,8 +120,21 @@ export function AssistantPane({
   existingMilestones,
   existingNotes,
   onCommitted,
+  demoSeed,
 }: AssistantPaneProps) {
-  const [log, setLog] = useState<LogEntry[]>([]);
+  const [log, setLog] = useState<LogEntry[]>(() =>
+    demoSeed
+      ? [
+          { id: "demo-u", role: "user", text: demoSeed.userText, proposal: null },
+          {
+            id: "demo-a",
+            role: "assistant",
+            text: demoSeed.turn.reply,
+            proposal: toProposal(demoSeed.turn),
+          },
+        ]
+      : [],
+  );
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [model, setModel] = useState<AssistantModelId>(DEFAULT_MODEL);
