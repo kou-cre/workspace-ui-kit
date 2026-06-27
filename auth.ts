@@ -11,6 +11,9 @@ declare module "next-auth" {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
+  // Vercel 以外の常駐ホスト（Railway/Render 等）でも host を信頼する（UntrustedHost 回避）。
+  // Vercel では自動信頼されるため無害。
+  trustHost: true,
   providers: [
     Google({}),
   ],

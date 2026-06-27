@@ -1,0 +1,4 @@
+.claude
+.playwright-mcp
+.vscode
+scripts/migrate-data.ts

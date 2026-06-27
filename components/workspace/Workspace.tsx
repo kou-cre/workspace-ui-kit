@@ -45,7 +45,9 @@ import {
 } from "@/lib/schema";
 import { type ComboOption } from "@/components/primitives/InlineComboboxField";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 import { GlobalHeader } from "@/components/workspace/GlobalHeader";
+import { AssistantPane } from "@/components/workspace/AssistantPane";
 import { MilestoneDetailPane } from "@/components/workspace/MilestoneDetailPane";
 import { NoteFolderDetailPane } from "@/components/workspace/NoteFolderDetailPane";
 import { ProjectListPane } from "@/components/workspace/ProjectListPane";
@@ -65,6 +67,7 @@ import {
   inviteCollaborator as inviteCollaboratorAction,
   removeCollaborator as removeCollaboratorAction,
   removePendingInvite as removePendingInviteAction,
+  fetchProjectById,
   type InviteResult,
 } from "@/lib/actions/projects";
 import {
@@ -172,6 +175,8 @@ type WorkspaceProps = {
 };
 
 export function Workspace({ initialProjects, workspace, user, onSignOut, googleCalendarEvents = [], initialUserSetting }: WorkspaceProps) {
+  const router = useRouter();
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [workStartTime, setWorkStartTime] = useState<string>(
     initialUserSetting?.workStartTime ?? DEFAULT_WORK_START_TIME,
@@ -1539,7 +1544,42 @@ export function Workspace({ initialProjects, workspace, user, onSignOut, googleC
           onSelectNote={navigateToNote}
           user={user}
           onSignOut={onSignOut}
+          onOpenAssistant={
+            selectedView !== "personal" && activeProject
+              ? () => setAssistantOpen(true)
+              : undefined
+          }
         />
+
+        {activeProject && (
+          <AssistantPane
+            open={assistantOpen}
+            onOpenChange={setAssistantOpen}
+            projectId={activeProject.id}
+            projectName={activeProject.name}
+            currentDescription={activeProject.description}
+            existingMilestones={activeProject.milestones.map((m) => ({
+              id: m.id,
+              label: m.label,
+            }))}
+            existingNotes={activeProject.notes.map((n) => ({
+              id: n.id,
+              title: n.title,
+              phase: n.phase,
+            }))}
+            onCommitted={async (committedProjectId) => {
+              // useState(initialProjects) は router.refresh() のプロップ変更を拾わないため、
+              // サーバから取り直してクライアント state を即時に差し替える（リロード不要）。
+              const fresh = await fetchProjectById(committedProjectId);
+              if (fresh) {
+                setProjects((prev) =>
+                  prev.map((p) => (p.id === fresh.id ? fresh : p)),
+                );
+              }
+              router.refresh();
+            }}
+          />
+        )}
 
         {/* ─── デスクトップレイアウト (lg+) ─── */}
         <div className="hidden lg:flex min-h-0 flex-1">
