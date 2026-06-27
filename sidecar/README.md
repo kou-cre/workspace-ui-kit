@@ -14,15 +14,32 @@ Vercel（画面/DB/認証・無料のまま）
 
 > 前提：**完全に自分専用・非共有**。URL とシークレットは誰にも渡さない。
 
+> ⚠️ **重要：このフォルダ（Google Drive 上）では `npm install` しないこと。**
+> `node_modules` には claude CLI（約212MB）が入る。Google Drive がこの巨大バイナリを
+> 常時同期しようとし、`npm run dev` 起動時にファイル監視と衝突して **CPU が張り付き PC がフリーズする**。
+> 実運用のサイドカーは **Drive 外の `~/workspace-ai-sidecar/`** に置き、そこで `npm install` して
+> launchd 常駐させている（下記「実運用の設置場所」参照）。このフォルダはソースの正本（git管理）専用。
+
 ---
+
+## 実運用の設置場所（現状・2026-06-27）
+
+- 設置先：`~/workspace-ai-sidecar/`（**Google Drive の外**。Drive 上だと同期 churn でフリーズするため）
+- 常駐：`~/Library/LaunchAgents/com.kosuke.workspace-ai-sidecar.plist`（RunAtLoad / KeepAlive）
+- スリープ抑止：`com.kosuke.workspace-ai-caffeinate.plist`
+- 公開：**Tailscale Funnel** 固定URL `https://kosukemac-studio.tail3541f8.ts.net` → `127.0.0.1:8787`
+- 更新手順：このフォルダの `server.mjs` 等を編集 → `~/workspace-ai-sidecar/` へコピー → `launchctl kickstart -k gui/$(id -u)/com.kosuke.workspace-ai-sidecar`
+
+以下は新しい Mac で一から立てる場合の汎用手順（**設置先は必ず Drive 外**にすること）。
 
 ## 1. 準備（初回のみ）
 
 Mac で `claude` にログイン済みであること（このリポジトリの開発に使っている Mac ならOK）。
 
 ```bash
-cd sidecar
-npm install            # @anthropic-ai/claude-agent-sdk だけを入れる
+# 設置先は Google Drive の外（例: ホーム直下）。Drive 上では絶対に install しない
+cp -R sidecar ~/workspace-ai-sidecar && cd ~/workspace-ai-sidecar
+npm install            # @anthropic-ai/claude-agent-sdk だけを入れる（約212MB）
 ```
 
 共有シークレットを生成して控える（Vercel 側にも同じ値を入れる）：
